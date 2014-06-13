@@ -8,7 +8,13 @@
 #ifndef COMMON_H
 #define	COMMON_H
 
+typedef unsigned char byte;
+typedef unsigned int uint;
 
+typedef unsigned char bool;
+
+#define true 1
+#define false 0
 
 #endif	/* COMMON_H */
 

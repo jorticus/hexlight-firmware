@@ -6,6 +6,9 @@
                    projectFiles="true">
       <itemPath>hardware.h</itemPath>
       <itemPath>common.h</itemPath>
+      <itemPath>hardwareUBW32.h</itemPath>
+      <itemPath>hardwareHexRGB.h</itemPath>
+      <itemPath>sound.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -15,6 +18,7 @@
                    displayName="Source Files"
                    projectFiles="true">
       <itemPath>main.c</itemPath>
+      <itemPath>sound.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -54,18 +58,14 @@
         <makeCustomizationEnableLongLines>false</makeCustomizationEnableLongLines>
         <makeCustomizationNormalizeHexFile>false</makeCustomizationNormalizeHexFile>
       </makeCustomizationType>
-      <C30>
-      </C30>
-      <C30-AS>
-      </C30-AS>
-      <C30-LD>
-      </C30-LD>
-      <C30Global>
-      </C30Global>
       <C32>
       </C32>
+      <C32-AS>
+      </C32-AS>
       <C32-LD>
       </C32-LD>
+      <C32CPP>
+      </C32CPP>
       <C32Global>
       </C32Global>
       <Simulator>
@@ -103,6 +103,16 @@
       </makeCustomizationType>
       <C32>
       </C32>
+      <C32-AS>
+      </C32-AS>
+      <C32-LD>
+      </C32-LD>
+      <C32CPP>
+      </C32CPP>
+      <C32Global>
+      </C32Global>
+      <Simulator>
+      </Simulator>
     </conf>
   </confs>
 </configurationDescriptor>

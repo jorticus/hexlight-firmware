@@ -13,18 +13,52 @@
  */
 
 #include <p32xxxx.h>
+#include <plib.h>
 #include "common.h"
 #include "hardware.h"
+#include "sound.h"
+
 
 void InitializeSystem() {
-    //TODO
+
+    // Disable ADC port (allows PORTB to be used for digital I/O)
+    AD1PCFG = 0xFFFF;
+
+    TRISE = 0x0000;
+    TRISB = 0x0000;
+    TRISC = 0x0000;
+    TRISD = 0x0000;
+    LATE = 0x0000;
+    LATB = 0x0000;
+    LATC = 0x0000;
+    LATD = 0x0000;
+
+    // Force disconnect of USB bootloader
+    U1CON = 0x00000000;
+    U1PWRC = 0x00000000;
+
+    mJTAGPortEnable(0);
+
+    // Initialize the PIC32 core
+    SYSTEMConfig(F_CPU, SYS_CFG_ALL);
+    INTEnableInterrupts();
+    INTEnableSystemMultiVectoredInt();
+
+    // LEDs
+    _TRIS(PIO_LED1) = OUTPUT;
+    _TRIS(PIO_LED2) = OUTPUT;
+    _TRIS(PIO_LED3) = OUTPUT;
 }
+
 
 int main(void) {
     InitializeSystem();
+    SndInitialize();
+
+    SndStartCapture();
 
     while (1) {
-
+        SndProcess();
     }
 
     return 0;
