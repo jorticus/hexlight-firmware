@@ -18,6 +18,9 @@
 #include "hardware.h"
 #include "sound.h"
 
+unsigned int sys_clock = F_OSC;
+unsigned int pb_clock = F_OSC;
+
 
 void InitializeSystem() {
 
@@ -37,17 +40,32 @@ void InitializeSystem() {
     U1CON = 0x00000000;
     U1PWRC = 0x00000000;
 
-    mJTAGPortEnable(0);
-
-    // Initialize the PIC32 core
-    SYSTEMConfig(F_CPU, SYS_CFG_ALL);
-    INTEnableInterrupts();
-    INTEnableSystemMultiVectoredInt();
-
     // LEDs
     _TRIS(PIO_LED1) = OUTPUT;
     _TRIS(PIO_LED2) = OUTPUT;
     _TRIS(PIO_LED3) = OUTPUT;
+    _TRIS(PIO_LED_USB) = OUTPUT;
+    _TRIS(PIO_BTN_PGM) = 1;
+    _TRIS(PIO_BTN_USR) = 1;
+
+    _LAT(PIO_LED1) = LOW;
+    _LAT(PIO_LED2) = LOW;
+    _LAT(PIO_LED3) = LOW;
+    _LAT(PIO_LED_USB) = LOW;
+
+    mJTAGPortEnable(0);
+
+    // Initializethe PIC32 core
+    OSCConfig(OSC_POSC_PLL, OSC_PLL_MULT_20, OSC_PLL_POST_1, OSC_FRC_POST_1);
+    sys_clock = F_OSC * 20 / 1; // Assumes the above configuration
+    mOSCSetPBDIV(OSC_PB_DIV_1);
+    pb_clock = SYSTEMConfig(sys_clock, SYS_CFG_ALL);
+
+
+    INTEnableInterrupts();
+    INTEnableSystemMultiVectoredInt();
+
+    //CheKseg0CacheOn(); 
 }
 
 
@@ -55,10 +73,16 @@ int main(void) {
     InitializeSystem();
     SndInitialize();
 
-    SndStartCapture();
+    //SndStartCapture();
 
     while (1) {
-        SndProcess();
+//        SndProcess();
+
+
+        // Convenience - pressing PGM also resets the device
+        if (_PORT(PIO_BTN_PGM) == HIGH) {
+            SoftReset();
+        }
     }
 
     return 0;

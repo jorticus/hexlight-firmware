@@ -15,7 +15,7 @@
 #define _LAT(pin)            _LAT_F(pin)
 #define _LAT_F(alpha,bit)    (LAT ## alpha ## bits.LAT ## alpha ## bit)
 #define toggle(pin)            _TOGGLE_F(pin)
-#define _TOGGLE_F(alpha,bit)    (TRIS ## alpha ## INV = (1<<bit))
+#define _TOGGLE_F(alpha,bit)    (LAT ## alpha ## INV = (1<<bit))
 #define R(alpha,bit) alpha,bit
 
 #define INPUT 1
@@ -26,13 +26,22 @@
 
 ///// Configuration //////
 
-#define F_CPU 16000000
+#define F_OSC 4000000L  // 8MHz oscillator / 2
+extern unsigned int sys_clock;
+extern unsigned int pb_clock;
 
 
+#define PIO_LED_USB     R(E,3)
+#define PIO_LED1        R(E,2)
+#define PIO_LED2        R(E,1)
+#define PIO_LED3        R(E,0)
 
-#define PIO_LED1 R(B,0) //TODO: Which pins are the LEDs on
-#define PIO_LED2 R(B,1)
-#define PIO_LED3 R(B,3)
+#define PIO_BTN_PGM     R(E,7)
+#define PIO_BTN_USR     R(E,6)
+
+// UBW32 uses active-low logic for LEDs and buttons
+#define HIGH 0
+#define LOW 1
 
 
 #endif	/* HARDWAREUBW32_H */

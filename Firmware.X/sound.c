@@ -44,8 +44,6 @@ static volatile bool flag_processing = false;    // read_buf is currently being 
 
 ///// Macros /////
 
-#define SAMPLE_TIMER_PERIOD 123 // TODO: Determine proper period
-
 
 ///// Code /////
 
@@ -72,7 +70,7 @@ void SndInitialize() {
     // 1 sample per ADC interrupt -> required for DMA
     // Using only MuxA (no alt MuxB), with a 16-bit buffer, using 16-bit fractional format.
     // Clock should be derived from peripheral clock, and sampling should start on timer match
-    AD1CON1 = ADC_MODULE_OFF | ADC_IDLE_CONTINUE | ADC_FORMAT_FRACT16 | ADC_CLK_TMR | ADC_AUTO_SAMPLING_ON;
+    /*AD1CON1 = ADC_MODULE_OFF | ADC_IDLE_CONTINUE | ADC_FORMAT_FRACT16 | ADC_CLK_TMR | ADC_AUTO_SAMPLING_ON;
     AD1CON2 = ADC_VREF_AVDD_AVSS | ADC_OFFSET_CAL_DISABLE | ADC_SCAN_OFF | ADC_SAMPLES_PER_INT_1 | ADC_BUF_16 | ADC_ALT_INPUT_OFF;
     AD1CON3 = ADC_CONV_CLK_PB | ADC_SAMPLE_TIME_12;
 
@@ -82,29 +80,32 @@ void SndInitialize() {
 
     // MuxA inputs:
     AD1CHSbits.CH0SA = 8;   // +: AN8
-    AD1CHSbits.CH0SB = 0;   // -: VRef-
+    AD1CHSbits.CH0SB = 0;   // -: VRef-*/
     
 
 
     ///// Configure ADC trigger timebase /////
     // NB: Only Timer3 can be used for triggering the ADC
-    TMR3 = 0;
-    PR3 = SAMPLE_TIMER_PERIOD;
-    T3CON = T3_IDLE_CON | T3_GATE_OFF | T3_PS_1_1 | T3_SOURCE_INT;
+    OpenTimer3(T3_IDLE_CON | T3_GATE_OFF | T3_PS_1_1 | T3_SOURCE_INT, pb_clock/(SAMPLE_RATE*2));
+
+    INTSetVectorPriority(INT_T3, 4);
+    INTSetVectorSubPriority(INT_T3, 3);
+    INTEnable(INT_T3, INT_ENABLED);
 
 
     ///// Configure DMA /////
-    DmaChnOpen(DMA_CHANNEL, DMA_CHN_PRI0, DMA_OPEN_DEFAULT);
+    /*DmaChnOpen(DMA_CHANNEL, DMA_CHN_PRI0, DMA_OPEN_DEFAULT);
 
     // Tell the DMA to automatically fill the buffer from the ADC interrupt
     DmaChnSetEventControl(DMA_CHANNEL, DMA_EV_START_IRQ(_ADC_IRQ));
-    DmaChnSetTxfer(DMA_CHANNEL, (void*)&ADC1BUF0, write_buf, 1, BUFFER_SIZE, 1);
+    DmaChnSetTxfer(DMA_CHANNEL, (void*)&ADC1BUF0, (void*)write_buf, 1, BUFFER_SIZE, 1);
 
     DmaChnSetEvEnableFlags(DMA_CHANNEL, DMA_EV_BLOCK_DONE);
     INTSetVectorPriority(INT_VECTOR_DMA(DMA_CHANNEL), INT_PRIORITY_LEVEL_5);
-    INTSetVectorSubPriority(INT_VECTOR(DMA_CHANNEL), INT_SUB_PRIORITY_LEVEL_3);
-    INTEnable(INT_SOURCE_DMA(DMA_CHANNEL), INT_ENABLED);
+    INTSetVectorSubPriority(INT_VECTOR_DMA(DMA_CHANNEL), INT_SUB_PRIORITY_LEVEL_3);
+    INTEnable(INT_SOURCE_DMA(DMA_CHANNEL), INT_ENABLED);*/
 
+    T3CONbits.ON = 1;
 
     // Clear buffers
     uint i;
@@ -112,6 +113,8 @@ void SndInitialize() {
         snd_buf1[i] = 0;
         snd_buf2[i] = 0;
     }
+
+    _LAT(PIO_LED2) = HIGH;
 }
 
 void SndStartCapture() {
@@ -147,12 +150,12 @@ void SndProcess() {
 
 static void swap_buffers() {
     // Swap the read and write buffers
-    byte* tmp = read_buf;
+    volatile byte* tmp = read_buf;
     read_buf = write_buf;
     write_buf = tmp;
 
     // Tell the DMA to use the new write buffer
-    DmaChnSetTxfer(DMA_CHANNEL, (void*)&ADC1BUF0, write_buf, 1, BUFFER_SIZE, 1);
+    DmaChnSetTxfer(DMA_CHANNEL, (void*)&ADC1BUF0, (void*)write_buf, 1, BUFFER_SIZE, 1);
 
     // Signal that the read buffer is ready to be processed
     flag_ready = true;
@@ -161,14 +164,14 @@ static void swap_buffers() {
 
 ///// Interrupt Service Routines /////
 
-void __ISR(DMA_VECTOR, IPL6AUTO) sound_dma_isr(void) {
+void __ISR(DMA_VECTOR, ipl6) sound_dma_isr(void) {
     // Called when a chunk of audio data has been recorded into the write buffer.
     toggle(PIO_LED2);
 
 
     // If the buf_ready flag hasn't been cleared, then buffer has underrun
     // (ie. the application didn't get start processing the current buffer)
-    if (flag_ready) {
+    /*if (flag_ready) {
 
 
     }
@@ -177,10 +180,10 @@ void __ISR(DMA_VECTOR, IPL6AUTO) sound_dma_isr(void) {
     else if (flag_processing) {
 
         return; // Throw away the new buffer's data and capture again
-    }
+    }*/
 
     // Swap the read and write buffers
-    swap_buffers();
+    //swap_buffers();
 
     DmaChnClrEvFlags(DMA_CHANNEL, DMA_EV_BLOCK_DONE);
     INTClearFlag(INT_SOURCE_DMA(DMA_CHANNEL));
@@ -189,4 +192,5 @@ void __ISR(DMA_VECTOR, IPL6AUTO) sound_dma_isr(void) {
 void __ISR(_TIMER_3_VECTOR, IPL5AUTO) timer3_isr(void) {
     // For debug, called at the sampling rate of the ADC
     toggle(PIO_LED1);
+    INTClearFlag(INT_T3);
 }
