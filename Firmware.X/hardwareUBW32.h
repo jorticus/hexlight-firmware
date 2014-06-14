@@ -31,10 +31,10 @@ extern unsigned int sys_clock;
 extern unsigned int pb_clock;
 
 
-#define PIO_LED_USB     R(E,3)
-#define PIO_LED1        R(E,2)
-#define PIO_LED2        R(E,1)
-#define PIO_LED3        R(E,0)
+#define PIO_LED_USB     R(E,3)  // Dim Yellow
+#define PIO_LED1        R(E,2)  // White
+#define PIO_LED2        R(E,1)  // Red
+#define PIO_LED3        R(E,0)  // Yellow
 
 #define PIO_BTN_PGM     R(E,7)
 #define PIO_BTN_USR     R(E,6)

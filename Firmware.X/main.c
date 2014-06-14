@@ -50,7 +50,7 @@ void InitializeSystem() {
 
     _LAT(PIO_LED1) = LOW;
     _LAT(PIO_LED2) = LOW;
-    _LAT(PIO_LED3) = LOW;
+    _LAT(PIO_LED3) = HIGH;
     _LAT(PIO_LED_USB) = LOW;
 
     mJTAGPortEnable(0);
@@ -73,7 +73,9 @@ int main(void) {
     InitializeSystem();
     SndInitialize();
 
-    //SndStartCapture();
+    SndStartCapture();
+
+    _LAT(PIO_LED3) = LOW;
 
     while (1) {
 //        SndProcess();
