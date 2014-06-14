@@ -16,7 +16,9 @@
 #include <plib.h>
 #include "common.h"
 #include "hardware.h"
-#include "sound.h"
+
+#include "adc.h"
+#include "pwm.h"
 
 unsigned int sys_clock = F_OSC;
 unsigned int pb_clock = F_OSC;
@@ -71,14 +73,15 @@ void InitializeSystem() {
 
 int main(void) {
     InitializeSystem();
-    SndInitialize();
-
-    SndStartCapture();
+    ADCInitialize();
+    PWMInitialize();
+    
+    ADCStartCapture();
+    PWMEnable();
 
     _LAT(PIO_LED3) = LOW;
 
     while (1) {
-//        SndProcess();
 
 
         // Convenience - pressing PGM also resets the device

@@ -12,6 +12,7 @@
 #include <peripheral/dma.h>
 #include "common.h"
 #include "hardware.h"
+#include "adc.h"
 
 ///// Configuration /////
 
@@ -39,10 +40,10 @@ static volatile byte snd_buf1[BUFFER_SIZE];
 static volatile byte snd_buf2[BUFFER_SIZE];
 
 static volatile byte* write_buf = snd_buf1;      // Buffer used for capturing audio samples
-static volatile byte* read_buf = snd_buf2;       // Buffer used for processing audio samples
+volatile byte* read_buf = snd_buf2;       // Buffer used for processing audio samples
 
-static volatile bool flag_ready = false;         // read_buf is ready to be processed (clear it when done)
-static volatile bool flag_processing = false;    // read_buf is currently being processed
+volatile bool flag_ready = false;         // read_buf is ready to be processed (clear it when done)
+volatile bool flag_processing = false;    // read_buf is currently being processed
 
 static volatile uint write_idx = 0;
 
@@ -53,7 +54,7 @@ static volatile uint write_idx = 0;
 
 ///// Code /////
 
-void SndInitialize() {
+void ADCInitialize() {
     ///// Init ADC /////
 
     // A1 - Configure analog input pins in AD1PCFG
@@ -114,7 +115,7 @@ void SndInitialize() {
     }
 }
 
-void SndStartCapture() {
+void ADCStartCapture() {
     AD1CON1bits.ON = 1;
     T3CONbits.ON = 1;
 
@@ -122,7 +123,7 @@ void SndStartCapture() {
     //DmaChnForceTxfer(DMA_CHANNEL);
 }
 
-void SndStopCapture() {
+void ADCStopCapture() {
     DmaChnDisable(DMA_CHANNEL);
 
     T3CONbits.ON = 0;
@@ -131,7 +132,7 @@ void SndStopCapture() {
     // TODO: What do we do with the currently processing DMA? Can we abort it?
 }
 
-void SndProcess() {
+void ADCProcess() {
     // Process the audio buffer
     if (flag_ready) {
         flag_processing = true;
