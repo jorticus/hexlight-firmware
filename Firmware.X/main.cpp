@@ -20,6 +20,8 @@
 #include "adc.h"
 #include "pwm.h"
 
+#include "colourengine.h"
+
 unsigned int sys_clock = F_OSC;
 unsigned int pb_clock = F_OSC;
 
@@ -76,10 +78,18 @@ int main(void) {
     ADCInitialize();
     PWMInitialize();
     
-    ADCStartCapture();
+    //ADCStartCapture();
     PWMEnable();
 
     _LAT(PIO_LED3) = LOW;
+
+    {
+        RGB colour(1.0, 1.0, 1.0);
+
+        ColourEngine::SetBrightness(0.2f);
+        ColourEngine::SetColour(colour);
+
+    }
 
     while (1) {
 

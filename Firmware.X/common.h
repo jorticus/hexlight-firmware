@@ -8,10 +8,14 @@
 #ifndef COMMON_H
 #define	COMMON_H
 
+
+
 typedef unsigned char byte;
 typedef unsigned int uint;
 
+#ifndef	__cplusplus
 typedef unsigned char bool;
+#endif
 
 #define true 1
 #define false 0

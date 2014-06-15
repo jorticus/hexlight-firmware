@@ -8,6 +8,9 @@
 #ifndef PWM_H
 #define	PWM_H
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
 
 typedef enum { PWM1=0, PWM2, PWM3, PWM4 } pwm_channel_t;
 
@@ -31,6 +34,9 @@ void PWMUpdate(INT16 ch1, INT16 ch2, INT16 ch3, INT16 ch4);
 void PWMAllOn();
 void PWMAllOff();
 
+#ifdef	__cplusplus
+}
+#endif
 
 #endif	/* PWM_H */
 

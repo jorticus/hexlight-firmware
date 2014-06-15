@@ -8,6 +8,10 @@
 #ifndef ADC_H
 #define	ADC_H
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 // Initialize the sound capture module
 void ADCInitialize();
 
@@ -23,6 +27,11 @@ extern volatile byte* read_buf;
 
 extern volatile bool flag_ready;         // read_buf is ready to be processed (clear it when done)
 extern volatile bool flag_processing;    // read_buf is currently being processed (set this yourself and clear when done)
+
+
+#ifdef	__cplusplus
+}
+#endif
 
 
 #endif	/* ADC_H */

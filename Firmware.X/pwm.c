@@ -16,8 +16,8 @@
 #include "pwm.h"
 
 // These map PWM channels to OC outputs
-volatile unsigned int* OCR[] = {&OC1R, &OC2R, &OC3R, &OC4R};
-volatile unsigned int* OCRS[] = {&OC1RS, &OC2RS, &OC3RS, &OC4RS};
+//volatile unsigned int* OCRS[] = {&OC1RS, &OC2RS, &OC3RS, &OC4RS};
+volatile unsigned int* OCRS[] = {&OC2RS, &OC3RS, &OC4RS, &OC1RS};
 
 #define OCxCON (OC_OFF | OC_IDLE_CON | OC_TIMER_MODE16 | OC_TIMER2_SRC | OC_PWM_FAULT_PIN_DISABLE)
 
