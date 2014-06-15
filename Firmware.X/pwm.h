@@ -8,7 +8,6 @@
 #ifndef PWM_H
 #define	PWM_H
 
-#include <GenericTypeDefs.h>
 
 typedef enum { PWM1=0, PWM2, PWM3, PWM4 } pwm_channel_t;
 
@@ -25,13 +24,9 @@ void PWMDisable();
 // Sets the timebase post-scaler, dividing the output frequency. (Default 1:1)
 void PWMSetScaler(pwm_prescaler_t ps);
 
-// Sets the output resolution, in bits (range 2-16 bits)
-void PWMSetResolution(uint res);
-
 // Adjust the PWM duty cycle
-void PWMSetChannel(pwm_channel_t channel, UINT16 value);
-UINT16 PWMGetChannel(pwm_channel_t channel);
-void PWMUpdate(UINT16 ch1, UINT16 ch2, UINT16 ch3, UINT16 ch4);
+void PWMSetChannel(pwm_channel_t channel, INT16 value);
+void PWMUpdate(INT16 ch1, INT16 ch2, INT16 ch3, INT16 ch4);
 
 void PWMAllOn();
 void PWMAllOff();

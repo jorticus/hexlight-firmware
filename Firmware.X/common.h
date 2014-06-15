@@ -16,5 +16,8 @@ typedef unsigned char bool;
 #define true 1
 #define false 0
 
+#include <GenericTypeDefs.h>
+#include "dsp.h"
+
 #endif	/* COMMON_H */
 

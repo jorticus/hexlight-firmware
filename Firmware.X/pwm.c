@@ -9,23 +9,31 @@
 #include <p32xxxx.h>
 #include <peripheral/timer.h>
 #include <peripheral/outcompare.h>
+#include <dsplib_dsp.h>
+#include <mchp_dsp_wrapper.h>
 #include "common.h"
 #include "hardware.h"
 #include "pwm.h"
 
-
-#define NUM_CHANNELS 4 // Do not change
-
-
-//uint channels[NUM_CHANNELS];
-
+// These map PWM channels to OC outputs
 volatile unsigned int* OCR[] = {&OC1R, &OC2R, &OC3R, &OC4R};
 volatile unsigned int* OCRS[] = {&OC1RS, &OC2RS, &OC3RS, &OC4RS};
 
-
 #define OCxCON (OC_OFF | OC_IDLE_CON | OC_TIMER_MODE16 | OC_TIMER2_SRC | OC_PWM_FAULT_PIN_DISABLE)
 
-#define PWMPR 0x03FF // 10-bit resolution
+//#define PWM_PR 0xFFFF // 16-bit resolution
+//#define PWM_PR 0x3FFF // 14-bit resolution
+//#define PWM_PR 0x0FFF // 12-bit resolution
+#define PWM_PR 0x03FF // 10-bit resolution
+//#define PWM_PR 0x00FF // 8-bit resolution
+
+
+
+static inline UINT16 calc_duty(INT16 value) {
+    // Input range is 0-32767, output range is 0-PWM_PR
+    // Using signed ints for compatibility with Q15 fractional datatype
+    return (value > 0) ? (PWM_PR * (INT32)value) / 32767 : 0;
+}
 
 
 void PWMInitialize() {
@@ -37,7 +45,7 @@ void PWMInitialize() {
     _TRIS(PIO_OC4) = OUTPUT;
 
     // Initialize the timebase (frequency = pb_clock/postscaler/PR2)
-    OpenTimer2(T2_OFF | T2_PS_1_1 | T2_SOURCE_INT, 0x03FF);
+    OpenTimer2(T2_OFF | T2_PS_1_1 | T2_SOURCE_INT, PWM_PR);
 
     // Initialize the OC modules
     OpenOC1(OCxCON, 0, 0);
@@ -45,12 +53,11 @@ void PWMInitialize() {
     OpenOC3(OCxCON, 0, 0);
     OpenOC4(OCxCON, 0, 0);
 
+    PWMSetChannel(PWM1, Q15(0.1));
 
-    PWMSetChannel(PWM1, 100);
-
-    PWMSetChannel(PWM2, 1000);
-    PWMSetChannel(PWM3, 1000);
-    PWMSetChannel(PWM4, 1000);
+    PWMSetChannel(PWM2, Q15(0.1));
+    PWMSetChannel(PWM3, Q15(0.1));
+    PWMSetChannel(PWM4, Q15(0.1));
 }
 
 void PWMEnable() {
@@ -79,19 +86,15 @@ void PWMSetScaler(pwm_prescaler_t ps) {
 }
 
 
-void PWMSetChannel(pwm_channel_t channel, UINT16 value) {
-    *OCRS[channel] = value;
+void PWMSetChannel(pwm_channel_t channel, INT16 value) {
+    *OCRS[channel] = calc_duty(value);
 }
 
-UINT16 PWMGetChannel(pwm_channel_t channel) {
-    return *OCRS[channel];
-}
-
-void PWMUpdate(UINT16 ch1, UINT16 ch2, UINT16 ch3, UINT16 ch4) {
-    OC1R = ch1;
-    OC2R = ch2;
-    OC3R = ch3;
-    OC4R = ch4;
+void PWMUpdate(INT16 ch1, INT16 ch2, INT16 ch3, INT16 ch4) {
+    *OCRS[PWM1] = calc_duty(ch1);
+    *OCRS[PWM2] = calc_duty(ch2);
+    *OCRS[PWM3] = calc_duty(ch3);
+    *OCRS[PWM4] = calc_duty(ch4);
 }
 
 void PWMAllOn() {
