@@ -40,6 +40,9 @@ namespace ColourEngine {
     void SetColour(RGB colour);
     void SetWhiteChannel(float value);
     void SetBrightness(float value);
+
+    void PowerOn();
+    void PowerOff();
 }
 
 #endif	/* COLOURENGINE_H */

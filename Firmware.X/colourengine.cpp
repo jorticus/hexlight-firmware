@@ -49,4 +49,13 @@ namespace ColourEngine {
         Update();
     }
 
+
+    void PowerOn() {
+        PWMEnable();
+        Update();
+    }
+    void PowerOff() {
+        PWMDisable();
+    }
+
 }

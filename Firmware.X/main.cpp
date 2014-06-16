@@ -20,12 +20,14 @@
 extern "C" {
     #include "USB/usb.h"
     #include "USB/usb_function_cdc.h"
-    #include "adc.h"
-    #include "pwm.h"
-    #include "usb.h"
 }
 
+#include "adc.h"
+#include "pwm.h"
+#include "usb.h"
 #include "colourengine.h"
+
+
 
 unsigned int sys_clock = F_OSC;
 unsigned int pb_clock = F_OSC;
@@ -88,19 +90,22 @@ int main(void) {
     USBDeviceInit();
     
     //ADCStartCapture();
-    PWMEnable();
 
     ColourEngine::Initialize();
+    ColourEngine::PowerOn();
 
     _LAT(PIO_LED3) = LOW;
 
     {
-        //RGB colour(1.0, 1.0, 1.0);
+        RGB colour(1.0, 1.0, 1.0);
 
         //ColourEngine::SetBrightness(1.0f);
-        //ColourEngine::SetColour(colour);
+        ColourEngine::SetColour(colour);
+        
 
     }
+
+    //_LAT(PIO_LED1) = HIGH;
 
     while (1) {
         USBDeviceTasks();
@@ -115,37 +120,4 @@ int main(void) {
     }
 
     return 0;
-}
-
-int USBUserProcess() {
-    //TODO: How can we abstract USB/UART comms a bit better?
-    static char rx_buffer[64];
-    static char tx_buffer[64];
-    int numBytesRead;
-
-    if ((USBDeviceState < CONFIGURED_STATE) || (USBSuspendControl == 1))
-        return 0;
-
-
-    numBytesRead = getsUSBUSART(rx_buffer, 64);
-    if (numBytesRead != 0) {
-
-        // Simple packet format: ['X'][R][G][B]
-        if (rx_buffer[0] == 'X') {
-            byte r = rx_buffer[1];
-            byte g = rx_buffer[2];
-            byte b = rx_buffer[3];
-
-            RGB colour(r/255.0, g/255.0, b/255.0);
-            ColourEngine::SetColour(colour);
-        }
-    }
-
-    /*if (USBUSARTIsTxTrfReady()) {
-        putUSBUSART(tx_buffer, 64);
-    }*/
-
-    CDCTxService();
-
-    return numBytesRead;
 }

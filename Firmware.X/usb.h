@@ -8,12 +8,18 @@
 #ifndef USB_H
 #define	USB_H
 
+// C++ functions
+
+int USBUserProcess(void);
+void USBCBSendResume();
+
+
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-
-int USBUserProcess();
+// C functions
 
 
 #ifdef	__cplusplus
