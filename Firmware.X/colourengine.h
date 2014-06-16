@@ -36,13 +36,18 @@ private:
 
 namespace ColourEngine {
     void Initialize();
+    void Tick1ms();
 
+    // Set the colour and update the PWM outputs
     void SetColour(RGB colour);
     void SetWhiteChannel(float value);
     void SetBrightness(float value);
 
-    void PowerOn();
-    void PowerOff();
+    // Turn the PWM outputs on or off, optionally fading.
+    // fade specifies the amount of time to fade over, in milliseconds.
+    // These calls are non-blocking
+    void PowerOn(uint fade=0);
+    void PowerOff(uint fade=0);
 }
 
 #endif	/* COLOURENGINE_H */

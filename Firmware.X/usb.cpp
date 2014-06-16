@@ -56,13 +56,13 @@ int USBUserProcess(void) {
 void USBCBSuspend() {
     // Called when the PC wants to power-down this device
     _LAT(PIO_LED1) = HIGH;
-    ColourEngine::PowerOff();
+    ColourEngine::PowerOff(500);
 }
 
 void USBCBWakeFromSuspend() {
     // This is sent by the PC if it wants the device to wake up from sleep
     _LAT(PIO_LED1) = LOW;
-    ColourEngine::PowerOn();
+    ColourEngine::PowerOn(500);
 }
 
 void USBCB_SOF_Handler() {

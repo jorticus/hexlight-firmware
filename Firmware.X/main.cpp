@@ -14,6 +14,7 @@
 
 #include <p32xxxx.h>
 #include <plib.h>
+#include <peripheral/timer.h>
 #include "common.h"
 #include "hardware.h"
 
@@ -28,10 +29,18 @@ extern "C" {
 #include "colourengine.h"
 
 
+#define TICK_FREQUENCY 1000
 
 unsigned int sys_clock = F_OSC;
 unsigned int pb_clock = F_OSC;
 
+
+void SystickInit() {
+    OpenTimer4(T4_ON | T4_IDLE_CON | T4_PS_1_8 | T4_32BIT_MODE_OFF | T4_SOURCE_INT, pb_clock/8/TICK_FREQUENCY);
+    INTSetVectorPriority(INT_TIMER_4_VECTOR, INT_PRIORITY_LEVEL_2);
+    INTSetVectorSubPriority(INT_TIMER_4_VECTOR, INT_SUB_PRIORITY_LEVEL_2);
+    INTEnable(INT_T4, INT_ENABLED);
+}
 
 void InitializeSystem() {
 
@@ -76,10 +85,11 @@ void InitializeSystem() {
     pb_clock = SYSTEMConfig(sys_clock, SYS_CFG_ALL);
 
 
+    INTConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
     INTEnableInterrupts();
-    INTEnableSystemMultiVectoredInt();
 
-    //CheKseg0CacheOn(); 
+    // Initialize core time base
+    SystickInit();
 }
 
 
@@ -88,11 +98,11 @@ int main(void) {
     ADCInitialize();
     PWMInitialize();
     USBDeviceInit();
-    
+
     //ADCStartCapture();
 
     ColourEngine::Initialize();
-    ColourEngine::PowerOn();
+    ColourEngine::PowerOn(1000);
 
     _LAT(PIO_LED3) = LOW;
 
@@ -120,4 +130,12 @@ int main(void) {
     }
 
     return 0;
+}
+
+extern "C" {
+    void __ISR(_TIMER_4_VECTOR, IPL2SOFT) tick_timer_isr() {
+        INTClearFlag(INT_T4);
+        ColourEngine::Tick1ms();
+        toggle(PIO_LED2);
+    }
 }
