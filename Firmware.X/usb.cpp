@@ -15,6 +15,15 @@ extern "C" {
 bool usb_sleeping = FALSE;
 
 
+typedef struct {
+    uint header;
+    float r;
+    float g;
+    float b;
+    float w;
+    float l;
+} hexrgb_packet_t;
+
 
 int USBUserProcess(void) {
     //TODO: How can we abstract USB/UART comms a bit better?
@@ -39,6 +48,15 @@ int USBUserProcess(void) {
             byte b = rx_buffer[3];
 
             RGB colour(r/255.0, g/255.0, b/255.0);
+            ColourEngine::SetColour(colour);
+        }
+
+        // HexRGB simple packet format: ['H'][R:4][G:4][B:4][W:4][L:4] (21 bytes)
+        else if (rx_buffer[0] == 'H') {
+            hexrgb_packet_t* packet = (hexrgb_packet_t*)rx_buffer;
+
+            RGB colour(packet->r, packet->g, packet->b);
+            ColourEngine::SetBrightness(packet->l);
             ColourEngine::SetColour(colour);
         }
     }
