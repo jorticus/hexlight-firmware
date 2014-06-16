@@ -35,6 +35,8 @@ private:
 };*/
 
 namespace ColourEngine {
+    void Initialize();
+
     void SetColour(RGB colour);
     void SetWhiteChannel(float value);
     void SetBrightness(float value);

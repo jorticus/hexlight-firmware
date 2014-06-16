@@ -49,6 +49,12 @@ extern unsigned int pb_clock;
 #define PIO_OC3 R(D,2)
 #define PIO_OC4 R(D,3)
 
+#define PIO_USBP R(G,2)
+#define PIO_USBN R(G,3)
+
+#define self_power 1
+#define USB_BUS_SENSE 1
+
 
 #endif	/* HARDWAREUBW32_H */
 

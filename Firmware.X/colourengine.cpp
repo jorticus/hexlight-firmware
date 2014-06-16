@@ -14,6 +14,9 @@ namespace ColourEngine {
     float current_white = 0.0f;
     float current_brightness = 1.0f;
 
+    static void CIE1931(float lum) {
+
+    }
 
     static void Update() {
         float r = current_colour.cr * current_brightness;
@@ -22,6 +25,13 @@ namespace ColourEngine {
         float w = current_white * current_brightness;
 
         PWMUpdate(Q15(r), Q15(g), Q15(b), Q15(w));
+    }
+
+
+
+
+    void Initialize() {
+        Update();
     }
 
     void SetColour(RGB _colour) {
