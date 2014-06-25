@@ -10,7 +10,7 @@
 
 // C++ functions
 
-int USBUserProcess(void);
+void USBUserProcess(void);
 void USBCBSendResume();
 
 

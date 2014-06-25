@@ -11,6 +11,7 @@ extern "C" {
 #include "usb.h"
 
 #include "colourengine.h"
+#include "comms.h"
 
 bool usb_sleeping = FALSE;
 
@@ -33,58 +34,51 @@ typedef struct {
 } hexrgb_packet_xyz_t;
 
 
-int USBUserProcess(void) {
+ProtocolFramer cdcProtocolFramer;
+
+void USBUserProcess(void) {
     //TODO: How can we abstract USB/UART comms a bit better?
-    static char rx_buffer[64];
-    static char tx_buffer[64];
+    static byte rx_buffer[64];
+    static byte tx_buffer[64];
     int numBytesRead;
+    static int numBytesToWrite = 0;
 
     if ((USBDeviceState < CONFIGURED_STATE) || (USBSuspendControl == 1)) {
         _LAT(PIO_LED_USB) = LOW;
-        return 0;
+        return;
     }
     _LAT(PIO_LED_USB) = HIGH;
 
 
-    numBytesRead = getsUSBUSART(rx_buffer, 64);
+    numBytesRead = getsUSBUSART((char*)rx_buffer, 64);
     if (numBytesRead != 0) {
+        int result = cdcProtocolFramer.ProcessData(rx_buffer, numBytesRead);
 
-        // Simple packet format: ['X'][R][G][B]
-        if (rx_buffer[0] == 'X') {
-            byte r = rx_buffer[1];
-            byte g = rx_buffer[2];
-            byte b = rx_buffer[3];
-
-            RGB colour(r/255.0, g/255.0, b/255.0);
-            ColourEngine::SetColour(colour);
+        if (cdcProtocolFramer.rx_idx > 0) {
+            for (int i=0; i<cdcProtocolFramer.rx_idx; i++)
+                tx_buffer[i] = cdcProtocolFramer.rx_buffer[i];
+            numBytesToWrite = cdcProtocolFramer.rx_idx;
+            cdcProtocolFramer.rx_idx = 0;
+        } else {
+            tx_buffer[0] = result;
+            numBytesToWrite = 1;
         }
 
-        // HexRGB simple packet format: ['H'][R:4][G:4][B:4][W:4][L:4] (21 bytes)
-        else if (rx_buffer[0] == 'H') {
-            //if (rx_buffer[1] == 'R') {
-                hexrgb_packet_t* packet = (hexrgb_packet_t*)rx_buffer;
-
-                RGB colour(packet->r, packet->g, packet->b);
-                ColourEngine::SetBrightness(packet->l);
-                ColourEngine::SetColour(colour);
-            /*} else if (rx_buffer[1] == 'R') {
-                hexrgb_packet_xyz_t* packet = (hexrgb_packet_xyz_t*)rx_buffer;
-
-                XYZ colour(packet->x, packet->y, packet->z);
-                ColourEngine::SetBrightness(packet->b);
-                ColourEngine::SetColourXYZ(colour);
-            }*/
-        }
-
+        /*if (result > 0) {
+            numBytesToWrite = result; // Need to wait for Trf to be ready before transmitting
+        } else if (result < 0) {
+            // Packet error
+            tx_buffer[0] = (byte)-result;
+            numBytesToWrite = 1;
+        }*/
     }
 
-    /*if (USBUSARTIsTxTrfReady()) {
-        putUSBUSART(tx_buffer, 64);
-    }*/
+    if (numBytesToWrite > 0 && USBUSARTIsTxTrfReady()) {
+        putUSBUSART((char*)tx_buffer, numBytesToWrite);
+        numBytesToWrite = 0;
+    }
 
     CDCTxService();
-
-    return numBytesRead;
 }
 
 

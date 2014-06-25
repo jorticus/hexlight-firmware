@@ -4,6 +4,10 @@
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
+      <logicalFolder name="f3" displayName="comms" projectFiles="true">
+        <itemPath>usb.h</itemPath>
+        <itemPath>comms.h</itemPath>
+      </logicalFolder>
       <logicalFolder name="f2" displayName="peripherals" projectFiles="true">
         <itemPath>pwm.h</itemPath>
         <itemPath>adc.h</itemPath>
@@ -23,7 +27,6 @@
       <itemPath>hardwareHexRGB.h</itemPath>
       <itemPath>dsp.h</itemPath>
       <itemPath>colourengine.h</itemPath>
-      <itemPath>usb.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -33,6 +36,10 @@
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
+      <logicalFolder name="f3" displayName="comms" projectFiles="true">
+        <itemPath>usb.cpp</itemPath>
+        <itemPath>comms.cpp</itemPath>
+      </logicalFolder>
       <logicalFolder name="f1" displayName="peripherals" projectFiles="true">
         <itemPath>pwm.c</itemPath>
         <itemPath>adc.c</itemPath>
@@ -45,7 +52,6 @@
       <itemPath>dsp.c</itemPath>
       <itemPath>main.cpp</itemPath>
       <itemPath>colourengine.cpp</itemPath>
-      <itemPath>usb.cpp</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
