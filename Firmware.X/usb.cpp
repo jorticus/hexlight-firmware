@@ -24,6 +24,14 @@ typedef struct {
     float l;
 } hexrgb_packet_t;
 
+typedef struct {
+    uint header;
+    float x;
+    float y;
+    float z;
+    float b;
+} hexrgb_packet_xyz_t;
+
 
 int USBUserProcess(void) {
     //TODO: How can we abstract USB/UART comms a bit better?
@@ -53,12 +61,21 @@ int USBUserProcess(void) {
 
         // HexRGB simple packet format: ['H'][R:4][G:4][B:4][W:4][L:4] (21 bytes)
         else if (rx_buffer[0] == 'H') {
-            hexrgb_packet_t* packet = (hexrgb_packet_t*)rx_buffer;
+            //if (rx_buffer[1] == 'R') {
+                hexrgb_packet_t* packet = (hexrgb_packet_t*)rx_buffer;
 
-            RGB colour(packet->r, packet->g, packet->b);
-            ColourEngine::SetBrightness(packet->l);
-            ColourEngine::SetColour(colour);
+                RGB colour(packet->r, packet->g, packet->b);
+                ColourEngine::SetBrightness(packet->l);
+                ColourEngine::SetColour(colour);
+            /*} else if (rx_buffer[1] == 'R') {
+                hexrgb_packet_xyz_t* packet = (hexrgb_packet_xyz_t*)rx_buffer;
+
+                XYZ colour(packet->x, packet->y, packet->z);
+                ColourEngine::SetBrightness(packet->b);
+                ColourEngine::SetColourXYZ(colour);
+            }*/
         }
+
     }
 
     /*if (USBUSARTIsTxTrfReady()) {

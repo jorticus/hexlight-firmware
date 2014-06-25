@@ -1,9 +1,11 @@
 
 
+#include <p32xxxx.h>
 #include <cstdlib>
 #include "common.h"
 #include "pwm.h"
 #include "dsp.h"
+#include "hardware.h"
 
 #include "colourengine.h"
 
@@ -11,7 +13,7 @@
 namespace ColourEngine {
 
     RGB current_colour;
-    float current_white = 0.0f;
+    //float current_white = 0.0f;
     float current_brightness = 1.0f;
 
     namespace Fade {
@@ -68,17 +70,28 @@ namespace ColourEngine {
         }
     }
 
-    static void CIE1931(float lum) {
-
+    static float cielum(float intensity) {
+        // Converts raw linear intensity to perceptually-linear luminance,
+        // using the CIE1931 perceptual luminance model
+        if (intensity <= 0.08) {
+            return intensity * 0.110705;
+        } else {
+            float a = (intensity + 0.16) * 0.86207;
+            return a*a*a;
+        }
     }
 
     static void Update() {
-        float r = current_colour.cr * current_brightness;
-        float g = current_colour.cg * current_brightness;
-        float b = current_colour.cb * current_brightness;
-        float w = current_white * current_brightness;
+        _LAT(PIO_LED2) = HIGH;
+        /*float r = cielum(current_colour.cr * current_brightness);
+        float g = cielum(current_colour.cg * current_brightness);
+        float b = cielum(current_colour.cb * current_brightness);*/
+        float r = current_colour.cr;
+        float g = current_colour.cg;
+        float b = current_colour.cb;
 
-        PWMUpdate(Q15(r), Q15(g), Q15(b), Q15(w));
+        PWMUpdate(Q15(r), Q15(g), Q15(b), 0);
+        _LAT(PIO_LED2) = LOW;
     }
 
 
@@ -100,10 +113,21 @@ namespace ColourEngine {
         Update();
     }
 
-    void SetWhiteChannel(float value) {
+    /*void SetColourXYZ(XYZ _colour) {
+        _LAT(PIO_LED2) = HIGH;
+        float r = cielum(current_colour.cr * current_brightness);
+        float g = cielum(current_colour.cg * current_brightness);
+        float b = cielum(current_colour.cb * current_brightness);
+
+
+        PWMUpdate(Q15(r), Q15(g), Q15(b), 0);
+        _LAT(PIO_LED2) = LOW;
+    }*/
+
+    /*void SetWhiteChannel(float value) {
         current_white = value;
         Update();
-    }
+    }*/
 
     void SetBrightness(float value) {
         current_brightness = value;

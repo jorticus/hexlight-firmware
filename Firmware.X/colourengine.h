@@ -20,6 +20,14 @@ public:
     float cr, cg, cb;
 };
 
+class XYZ {
+public:
+    XYZ(float x=0, float y=0, float z=0) :
+        _x(x), _y(y), _z(z) {};
+        
+    float _x, _y, _z;
+};
+
 /*class ColourEngine {
 public:
     static void SetColour(RGB colour);
@@ -40,8 +48,11 @@ namespace ColourEngine {
 
     // Set the colour and update the PWM outputs
     void SetColour(RGB colour);
-    void SetWhiteChannel(float value);
+    //void SetWhiteChannel(float value);
     void SetBrightness(float value);
+
+    //void SetRGB(RGB colour); // Raw linear RGB values
+    //void SetColourXYZ(XYZ colour); // Device-independant XYZ
 
     // Turn the PWM outputs on or off, optionally fading.
     // fade specifies the amount of time to fade over, in milliseconds.
