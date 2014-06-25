@@ -21,10 +21,10 @@ volatile unsigned int* OCRS[] = {&OC2RS, &OC3RS, &OC4RS, &OC1RS};
 
 #define OCxCON (OC_OFF | OC_IDLE_CON | OC_TIMER_MODE16 | OC_TIMER2_SRC | OC_PWM_FAULT_PIN_DISABLE)
 
-//#define PWM_PR 0xFFFF // 16-bit resolution
+#define PWM_PR 0xFFFF // 16-bit resolution
 //#define PWM_PR 0x3FFF // 14-bit resolution
 //#define PWM_PR 0x0FFF // 12-bit resolution
-#define PWM_PR 0x03FF // 10-bit resolution
+//#define PWM_PR 0x03FF // 10-bit resolution
 //#define PWM_PR 0x00FF // 8-bit resolution
 
 

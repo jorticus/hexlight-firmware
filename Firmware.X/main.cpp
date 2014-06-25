@@ -136,6 +136,6 @@ extern "C" {
     void __ISR(_TIMER_4_VECTOR, IPL2SOFT) tick_timer_isr() {
         INTClearFlag(INT_T4);
         ColourEngine::Tick1ms();
-        toggle(PIO_LED2);
+        //toggle(PIO_LED2);
     }
 }

@@ -2,3 +2,6 @@ Makefile
 nbproject
 build
 dist
+/PCB/History
+/__Previews
+/PCB/__Previews
