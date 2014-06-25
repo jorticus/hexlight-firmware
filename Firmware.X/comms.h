@@ -20,6 +20,9 @@ typedef struct __attribute__((packed)) {
    // byte eof;
 } packet_footer_t;
 
+#define RESULT_PROCESSING 0
+#define RESULT_SUCCESS 1
+#define RESULT_ERROR -1
 
 #define MIN_PACKET_SIZE (sizeof(packet_header_t) + sizeof(packet_footer_t))
 #define MAX_PACKET_SIZE 64
@@ -35,20 +38,30 @@ typedef struct __attribute__((packed)) {
 class ProtocolFramer {
 public:
     ProtocolFramer() :
-        rx_idx(0), waitingForEOF(FALSE)
+        rx_idx(0), tx_idx(0), rx_state(stWaitingForSOF)
         {};
 
 
     bool ProcessData(byte* buf, int len);
 
-    bool waitingForEOF;
-    byte rx_buffer[RX_BUFFER_SIZE];
-    int rx_idx;
+    
+    byte tx_buffer[MAX_PACKET_SIZE];
+    uint tx_idx;
 
 private:
-    int FindFrame(byte** buf, int* len);
-    //int ParseData(byte* buf, byte len);
-    int ProcessFrame();
+    int ProcessByte(byte b);
+    int ProcessFrame(byte* data, uint len);
+    bool PreparePacket(byte command, byte* payload, uint len);
+    bool TxWrite(byte b);
+
+    typedef enum { stWaitingForSOF, stWaitingForHeader, stReadingFrame } state_t;
+
+    byte rx_buffer[MAX_PACKET_SIZE];
+    
+    uint rx_idx;
+    
+
+    state_t rx_state;
 };
 
 
@@ -83,6 +96,7 @@ typedef enum { XYZ_CH1, XYZ_CH2, XYZ_CH3, XYZ_CH4, XYZ_WHITE } pl_xyz_cal_ch;
 typedef enum { MODE_HOST_CONTROL, MODE_TRIG, MODE_CYCLE, MODE_AUDIO } pl_mode;
 
 
+#define CMD_TEST 0x00
 #define CMD_POWER_ON 0x01
 #define CMD_POWER_OFF 0x02
 #define CMD_SET_MODE 0x03

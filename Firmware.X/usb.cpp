@@ -54,7 +54,13 @@ void USBUserProcess(void) {
     if (numBytesRead != 0) {
         int result = cdcProtocolFramer.ProcessData(rx_buffer, numBytesRead);
 
-        if (cdcProtocolFramer.rx_idx > 0) {
+        if (cdcProtocolFramer.tx_idx > 0) {
+            numBytesToWrite = cdcProtocolFramer.tx_idx;
+            for (int i=0; i<numBytesToWrite; i++)
+                tx_buffer[i] = cdcProtocolFramer.tx_buffer[i];
+        }
+
+        /*if (cdcProtocolFramer.rx_idx > 0) {
             for (int i=0; i<cdcProtocolFramer.rx_idx; i++)
                 tx_buffer[i] = cdcProtocolFramer.rx_buffer[i];
             numBytesToWrite = cdcProtocolFramer.rx_idx;
@@ -62,7 +68,7 @@ void USBUserProcess(void) {
         } else {
             tx_buffer[0] = result;
             numBytesToWrite = 1;
-        }
+        }*/
 
         /*if (result > 0) {
             numBytesToWrite = result; // Need to wait for Trf to be ready before transmitting
