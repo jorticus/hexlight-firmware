@@ -107,10 +107,10 @@ int main(void) {
     _LAT(PIO_LED3) = LOW;
 
     {
-        RGB colour(1.0, 1.0, 1.0);
+        RGBColour colour(1.0, 1.0, 1.0);
 
         //ColourEngine::SetBrightness(1.0f);
-        ColourEngine::SetColour(colour);
+        ColourEngine::SetRGB(colour);
         
 
     }

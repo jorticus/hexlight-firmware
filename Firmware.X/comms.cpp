@@ -6,6 +6,7 @@
 
 #include "pwm.h"
 #include "colourengine.h"
+#include "USB/usb_hal_pic32.h"
 
 
 int ProcessCommand(byte command, byte* payload_data, byte payload_len, byte* reply_data, uint* reply_len) {
@@ -20,12 +21,12 @@ int ProcessCommand(byte command, byte* payload_data, byte payload_len, byte* rep
             break;
 
         case CMD_POWER_OFF:
-            PWMDisable();
+            ColourEngine::PowerOff();
             return RESULT_SUCCESS;
             break;
 
         case CMD_POWER_ON:
-            PWMEnable();
+            ColourEngine::PowerOn();
             return RESULT_SUCCESS;
             break;
 
@@ -33,6 +34,7 @@ int ProcessCommand(byte command, byte* payload_data, byte payload_len, byte* rep
             //pl_mode mode = *(pl_mode*)payload_data;
             break;
 
+        // Directly set the raw linear PWM values (0-32767), for each of the four channels.
         case CMD_SET_PWM:
             if (payload_len == sizeof(pl_pwm_t)) {
                 pl_pwm_t* payload = (pl_pwm_t*)payload_data;
@@ -40,6 +42,30 @@ int ProcessCommand(byte command, byte* payload_data, byte payload_len, byte* rep
                 return RESULT_SUCCESS;
             }
             break;
+
+        // Update the outputs using device-independant colour
+        case CMD_SET_XYY:
+            if (payload_len == sizeof(XYYColour)) {
+                XYYColour* payload = (XYYColour*)payload_data;
+                ColourEngine::SetXYY(*payload);
+                return RESULT_SUCCESS;
+            }
+            break;
+
+        // Update the outputs using device-independant colour
+        case CMD_SET_XYZ:
+            if (payload_len == sizeof(XYZColour)) {
+                XYZColour* payload = (XYZColour*)payload_data;
+                ColourEngine::SetXYZ(*payload);
+                return RESULT_SUCCESS;
+            }
+            break;
+
+        case CMD_GET_XYY:
+            XYYColour* payload = (XYYColour*)reply_data;
+            *reply_len = sizeof(XYYColour);
+            *payload = ColourEngine::GetXYY();
+            return RESULT_SUCCESS;
     }
     return RESULT_ERROR;
 }

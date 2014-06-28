@@ -66,6 +66,7 @@ private:
 
 
 
+#include "colourspaces.h"
 
 
 typedef struct {
@@ -75,7 +76,7 @@ typedef struct {
     UINT16 ch4;
 } pl_pwm_t;
 
-typedef struct {
+/*typedef struct {
     float X;
     float Y;
     float Z;
@@ -85,11 +86,12 @@ typedef struct {
     float x;
     float y;
     float Y;
-} pl_xyy_t;
+} pl_xyy_t;*/
 
 typedef struct {
     byte ch;
-    pl_xyy_t point;
+    //pl_xyy_t point;
+    XYYColour colour_point;
 } pl_xyz_cal_t;
 typedef enum { XYZ_CH1, XYZ_CH2, XYZ_CH3, XYZ_CH4, XYZ_WHITE } pl_xyz_cal_ch;
 
@@ -103,11 +105,12 @@ typedef enum { MODE_HOST_CONTROL, MODE_TRIG, MODE_CYCLE, MODE_AUDIO } pl_mode;
 #define CMD_GET_LAST_ERROR 0x04
 
 #define CMD_SET_PWM 0x10
-#define CMD_GET_PWM 0x11
-#define CMD_SET_XYZ 0x12
-#define CMD_GET_XYZ 0x13
-#define CMD_SET_XYY 0x14
-#define CMD_GET_XYY 0x15
+#define CMD_SET_RGB 0x12
+#define CMD_GET_RGB 0x13
+#define CMD_SET_XYZ 0x14
+#define CMD_GET_XYZ 0x15
+#define CMD_SET_XYY 0x16
+#define CMD_GET_XYY 0x17
 
 #define CMD_SET_XYZ_CAL 0x20
 #define CMD_GET_XYZ_CAL 0x21

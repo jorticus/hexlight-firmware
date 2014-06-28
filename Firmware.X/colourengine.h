@@ -10,23 +10,8 @@
 #ifndef COLOURENGINE_H
 #define	COLOURENGINE_H
 
+#include "colourspaces.h"
 
-// Represents RGB(W) colour which can be used to update the PWM channels
-class RGB {
-public:
-    RGB(float red=0, float green=0, float blue=0) :
-        cr(red), cg(green), cb(blue)  {};
-
-    float cr, cg, cb;
-};
-
-class XYZ {
-public:
-    XYZ(float x=0, float y=0, float z=0) :
-        _x(x), _y(y), _z(z) {};
-        
-    float _x, _y, _z;
-};
 
 /*class ColourEngine {
 public:
@@ -46,17 +31,22 @@ namespace ColourEngine {
     void Initialize();
     void Tick1ms();
 
-    // Set the colour and update the PWM outputs
-    void SetColour(RGB colour);
-    //void SetWhiteChannel(float value);
-    void SetBrightness(float value);
 
-    //void SetRGB(RGB colour); // Raw linear RGB values
-    //void SetColourXYZ(XYZ colour); // Device-independant XYZ
+    // Set the colour and update the PWM outputs. Corrected for linear perception
+    // Not recommended, RGB doesn't say anything about the LEDs used.
+    void SetRGB(RGBColour colour);
+    RGBColour GetRGB();
 
-    // Turn the PWM outputs on or off, optionally fading.
-    // fade specifies the amount of time to fade over, in milliseconds.
-    // These calls are non-blocking
+    // xyY or XYZ are the best options for setting colour. Corrected for linear perception
+    void SetXYY(XYYColour colour);
+    XYYColour GetXYY();
+
+    void SetXYZ(XYZColour colour);
+    XYZColour GetXYZ();
+
+    void CalibrateChannel(uint channel, XYYColour colour_point);
+
+    // Turn the PWM outputs on or off
     void PowerOn(uint fade=0);
     void PowerOff(uint fade=0);
 }
