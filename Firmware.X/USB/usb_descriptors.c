@@ -162,17 +162,8 @@ state according to the definition in the USB specification.
 #include "./USB/usb_function_audio.h"
 
 /** CONSTANTS ******************************************************/
-#if defined(__18CXX)
-#pragma romdata
-#endif
 
-#if defined(USB_USE_CDC)
-    #define CLASS_CODE CDC_DEVICE
-    #define PID 0x000A  // Product ID: CDC RS-232 Emulation Demo
-#else
-    #define CLASS_CODE 0x00
-    #define PID 0x1E01
-#endif
+#define PID 0x1E00
 
 /* Device Descriptor */
 ROM USB_DEVICE_DESCRIPTOR device_dsc=
@@ -180,7 +171,7 @@ ROM USB_DEVICE_DESCRIPTOR device_dsc=
     0x12,                   // Size of this descriptor in bytes
     USB_DESCRIPTOR_DEVICE,  // DEVICE descriptor type
     0x0200,                 // USB Spec Release Number in BCD format
-    CLASS_CODE,                   // Class Code
+    0x00,                   // Class Code
     0x00,                   // Subclass code
     0x00,                   // Protocol code
     USB_EP0_BUFF_SIZE,      // Max packet size for EP0, see usb_config.h
@@ -194,24 +185,56 @@ ROM USB_DEVICE_DESCRIPTOR device_dsc=
 };
 
 
-#if defined(USB_USE_HID)
+#ifdef USB_USE_HID
+    #define HID_CFG_LEN 0x20
+    #define HID_NUM_INTF 1
+#else
+    #define HID_CFG_LEN 0
+    #define HID_NUM_INTF 0
+#endif
+#ifdef USB_USE_CDC
+    #define CDC_CFG_LEN 58
+    #define CDC_NUM_INTF 2
+#else
+    #define CDC_CFG_LEN 0
+    #define CDC_NUM_INTF 0
+#endif
+#ifdef USB_USE_AUDIO_CLASS
+    #define AUDIO_CFG_LEN 0x5B
+    #define AUDIO_NUM_INTF 2
+    #define HID_INTF_ID_X (HID_INTF_ID+0x02)
+#else
+    #define AUDIO_CFG_LEN 0
+    #define AUDIO_NUM_INTF 0
+    #define HID_INTF_ID_X HID_INTF_ID
+#endif
 
-/* Configuration 1 Descriptor (HID) */
+#define CFG_LEN (HID_CFG_LEN+CDC_CFG_LEN+AUDIO_CFG_LEN+0x09)
+#define NUM_INTF (HID_NUM_INTF+CDC_NUM_INTF+AUDIO_NUM_INTF)
+
+
+
+
+/* Configuration 1 Descriptor */
 ROM BYTE configDescriptor1[]={
     /* Configuration Descriptor */
     0x09,//sizeof(USB_CFG_DSC),    // Size of this descriptor in bytes
     USB_DESCRIPTOR_CONFIGURATION,                // CONFIGURATION descriptor type
-    0x29,0x00,            // Total length of data for this cfg
-    1,                      // Number of interfaces in this cfg
+    CFG_LEN,0x00,         	// Total length of data for this cfg //shijas
+    NUM_INTF,               // Number of interfaces in this cfg
     1,                      // Index value of this configuration
     0,                      // Configuration string index
-    _DEFAULT | _SELF,               // Attributes, see usb_device.h
+    _DEFAULT | _SELF,       // Attributes, see usb_device.h
     50,                     // Max power consumption (2X mA)
+
+
+#if defined(USB_USE_HID)
+    // 0x20 bytes
 
     /* Interface Descriptor */
     0x09,//sizeof(USB_INTF_DSC),   // Size of this descriptor in bytes
     USB_DESCRIPTOR_INTERFACE,               // INTERFACE descriptor type
-    0,                      // Interface Number
+    HID_INTF_ID,                      // Interface Number
     0,                      // Alternate Setting Number
     2,                      // Number of endpoints in this intf
     HID_INTF,               // Class code
@@ -242,27 +265,14 @@ ROM BYTE configDescriptor1[]={
     HID_EP | _EP_OUT,                   //EndpointAddress
     _INTERRUPT,                       //Attributes
     0x40,0x00,                  //size
-    0x01                        //Interval
-};
-
+    0x01,                        //Interval
 #elif defined(USB_USE_CDC)
-
-/* Configuration 1 Descriptor (CDC) */
-ROM BYTE configDescriptor1[]={
-    /* Configuration Descriptor */
-    0x09,//sizeof(USB_CFG_DSC),    // Size of this descriptor in bytes
-    USB_DESCRIPTOR_CONFIGURATION,                // CONFIGURATION descriptor type
-    67,0,                   // Total length of data for this cfg
-    2,                      // Number of interfaces in this cfg
-    1,                      // Index value of this configuration
-    0,                      // Configuration string index
-    _DEFAULT | _SELF,               // Attributes, see usb_device.h
-    50,                     // Max power consumption (2X mA)
+    // 58 bytes (0x3A)
 
     /* Interface Descriptor */
     9,//sizeof(USB_INTF_DSC),   // Size of this descriptor in bytes
     USB_DESCRIPTOR_INTERFACE,               // INTERFACE descriptor type
-    0,                      // Interface Number
+    CDC_INTF1_ID,                      // Interface Number
     0,                      // Alternate Setting Number
     1,                      // Number of endpoints in this intf
     COMM_INTF,              // Class code
@@ -305,7 +315,7 @@ ROM BYTE configDescriptor1[]={
     /* Interface Descriptor */
     9,//sizeof(USB_INTF_DSC),   // Size of this descriptor in bytes
     USB_DESCRIPTOR_INTERFACE,               // INTERFACE descriptor type
-    1,                      // Interface Number
+    CDC_INTF2_ID,                      // Interface Number
     0,                      // Alternate Setting Number
     2,                      // Number of endpoints in this intf
     DATA_INTF,              // Class code
@@ -330,23 +340,11 @@ ROM BYTE configDescriptor1[]={
     _BULK,                       //Attributes
     0x40,0x00,                  //size
     0x00,                       //Interval
-};
 #endif
 
+
 #ifdef USB_USE_AUDIO_CLASS
-/* Configuration 1 Descriptor */
-ROM BYTE configDescriptor1[]={
-
-    /* USB Microphone Configuration Descriptor */
-    0x09,//sizeof(USB_CFG_DSC),    // Size of this descriptor in bytes
-    USB_DESCRIPTOR_CONFIGURATION,                // CONFIGURATION descriptor type
-    0x64,0x00,            	// Total length of data for this cfg //shijas
-    2,                      // Number of interfaces in this cfg
-    1,                      // Index value of this configuration
-    0,                      // Configuration string index
-    _DEFAULT | _SELF,       // Attributes, see usb_device.h
-    50,                     // Max power consumption (2X mA)
-
+    // 0x5B bytes
 
     /* USB Microphone Standard AC Interface Descriptor	*/
     0x09,//sizeof(USB_INTF_DSC),   // Size of this descriptor in bytes
@@ -437,7 +435,7 @@ ROM BYTE configDescriptor1[]={
 	/*  USB Microphone Standard Endpoint Descriptor */
 	0x09,					    // Size of the descriptor, in bytes (bLength)
 	0x05,						// ENDPOINT descriptor (bDescriptorType)
-	0x81,						// IN Endpoint 1. (bEndpointAddress)
+	AS_EP | _EP_IN,						// IN Endpoint 1. (bEndpointAddress)
 	0x01,						// Isochronous, not shared. (bmAttributes)
 	0x10,0x00,					// 16 bytes per packet (wMaxPacketSize)
 	0x01,						// One packet per frame.(bInterval)
@@ -450,10 +448,11 @@ ROM BYTE configDescriptor1[]={
 	AS_GENERAL,					// GENERAL subtype. (bDescriptorSubtype)
 	0x00,						// No sampling frequency control, no pitch control, no packet padding.(bmAttributes)
 	0x00,						// Unused. (bLockDelayUnits)
-	0x00,0x00					// Unused. (wLockDelay)
+	0x00,0x00,					// Unused. (wLockDelay)
+#endif
 
 };
-#endif
+
 
 
 //Language code string descriptor
