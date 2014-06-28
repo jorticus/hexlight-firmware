@@ -25,15 +25,9 @@ Description:
     folder (like the current demo folders), then the following include
     paths need to be added to the application's project:
     
-    ..\\Include
+    .
     
-    ..\\..\\Include
-    
-    ..\\..\\MicrochipInclude
-    
-    ..\\..\\\<Application Folder\>
-    
-    ..\\..\\..\\\<Application Folder\>
+    ..\\..\\Microchip\\Include
     
     If a different directory structure is used, modify the paths as
     required. An example using absolute paths instead of relative paths
@@ -76,6 +70,16 @@ IN ANY CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL OR
 CONSEQUENTIAL DAMAGES, FOR ANY REASON WHATSOEVER.
 
 *******************************************************************************/
+//DOM-IGNORE-END
+
+//DOM-IGNORE-BEGIN
+/********************************************************************
+ Change History:
+  Rev    Description
+  ----   -----------
+  2.6    Moved many of the CH9 defintions from the device stack files
+         into this file.
+********************************************************************/
 //DOM-IGNORE-END
 
 //DOM-IGNORE-BEGIN
@@ -225,6 +229,17 @@ typedef struct __attribute__ ((packed)) _USB_ENDPOINT_DESCRIPTOR
 #define EP_MED_PKT_BULK_FS  16      // Medium full-speed bulk packet
 #define EP_SM_PKT_BULK_FS   8       // Small full-speed bulk packet
 
+/* Descriptor IDs
+The descriptor ID type defines the information required by the HOST during a 
+GET_DESCRIPTOR request
+*/
+typedef struct
+{
+    BYTE    index;
+    BYTE    type;
+    UINT16  language_id;
+
+} DESCRIPTOR_ID;
 
 // *****************************************************************************
 /* USB OTG Descriptor Structure
@@ -290,7 +305,6 @@ typedef struct __attribute__ ((packed)) _USB_DEVICE_QUALIFIER_DESCRIPTOR
 
 } USB_DEVICE_QUALIFIER_DESCRIPTOR;
 
-
 // ******************************************************************
 // Section: USB Setup Packet Structure
 // ******************************************************************
@@ -300,26 +314,122 @@ typedef struct __attribute__ ((packed)) _USB_DEVICE_QUALIFIER_DESCRIPTOR
 //
 // Note: Refer to the USB 2.0 specification for additional details on the
 // usage of the setup packet and standard device requests.
-
-typedef struct __attribute__ ((packed)) SetupPkt
+typedef union __attribute__ ((packed))
 {
-    union                           // offset   description
-    {                               // ------   ------------------------
-        BYTE bmRequestType;         //   0      Bit-map of request type
-        struct
-        {
-            BYTE    recipient:  5;  //          Recipient of the request
-            BYTE    type:       2;  //          Type of request
-            BYTE    direction:  1;  //          Direction of data X-fer
-        };
-    }requestInfo;
+    /** Standard Device Requests ***********************************/
+    struct __attribute__ ((packed))
+    {
+        BYTE bmRequestType; //from table 9-2 of USB2.0 spec
+        BYTE bRequest; //from table 9-2 of USB2.0 spec
+        WORD wValue; //from table 9-2 of USB2.0 spec
+        WORD wIndex; //from table 9-2 of USB2.0 spec
+        WORD wLength; //from table 9-2 of USB2.0 spec
+    };
+    struct __attribute__ ((packed))
+    {
+        unsigned :8;
+        unsigned :8;
+        WORD_VAL W_Value; //from table 9-2 of USB2.0 spec, allows byte/bitwise access
+        WORD_VAL W_Index; //from table 9-2 of USB2.0 spec, allows byte/bitwise access
+        WORD_VAL W_Length; //from table 9-2 of USB2.0 spec, allows byte/bitwise access
+    };
+    struct __attribute__ ((packed))
+    {
+        unsigned Recipient:5;   //Device,Interface,Endpoint,Other
+        unsigned RequestType:2; //Standard,Class,Vendor,Reserved
+        unsigned DataDir:1;     //Host-to-device,Device-to-host
+        unsigned :8;
+        BYTE bFeature;          //DEVICE_REMOTE_WAKEUP,ENDPOINT_HALT
+        unsigned :8;
+        unsigned :8;
+        unsigned :8;
+        unsigned :8;
+        unsigned :8;
+    };
+    struct __attribute__ ((packed))
+    {
+        union                           // offset   description
+        {                               // ------   ------------------------
+            BYTE bmRequestType;         //   0      Bit-map of request type
+            struct
+            {
+                BYTE    recipient:  5;  //          Recipient of the request
+                BYTE    type:       2;  //          Type of request
+                BYTE    direction:  1;  //          Direction of data X-fer
+            };
+        }requestInfo;
+    };
+    struct __attribute__ ((packed))
+    {
+        unsigned :8;
+        unsigned :8;
+        BYTE bDscIndex;         //For Configuration and String DSC Only
+        BYTE bDescriptorType;          //Device,Configuration,String
+        WORD wLangID;           //Language ID
+        unsigned :8;
+        unsigned :8;
+    };
+    struct __attribute__ ((packed))
+    {
+        unsigned :8;
+        unsigned :8;
+        BYTE_VAL bDevADR;       //Device Address 0-127
+        BYTE bDevADRH;          //Must equal zero
+        unsigned :8;
+        unsigned :8;
+        unsigned :8;
+        unsigned :8;
+    };
+    struct __attribute__ ((packed))
+    {
+        unsigned :8;
+        unsigned :8;
+        BYTE bConfigurationValue;         //Configuration Value 0-255
+        BYTE bCfgRSD;           //Must equal zero (Reserved)
+        unsigned :8;
+        unsigned :8;
+        unsigned :8;
+        unsigned :8;
+    };
+    struct __attribute__ ((packed))
+    {
+        unsigned :8;
+        unsigned :8;
+        BYTE bAltID;            //Alternate Setting Value 0-255
+        BYTE bAltID_H;          //Must equal zero
+        BYTE bIntfID;           //Interface Number Value 0-255
+        BYTE bIntfID_H;         //Must equal zero
+        unsigned :8;
+        unsigned :8;
+    };
+    struct __attribute__ ((packed))
+    {
+        unsigned :8;
+        unsigned :8;
+        unsigned :8;
+        unsigned :8;
+        BYTE bEPID;             //Endpoint ID (Number & Direction)
+        BYTE bEPID_H;           //Must equal zero
+        unsigned :8;
+        unsigned :8;
+    };
+    struct __attribute__ ((packed))
+    {
+        unsigned :8;
+        unsigned :8;
+        unsigned :8;
+        unsigned :8;
+        unsigned EPNum:4;       //Endpoint Number 0-15
+        unsigned :3;
+        unsigned EPDir:1;       //Endpoint Direction: 0-OUT, 1-IN
+        unsigned :8;
+        unsigned :8;
+        unsigned :8;
+    };
 
-    BYTE    bRequest;               //   1      Request type
-    UINT16  wValue;                 //   2      Depends on bRequest
-    UINT16  wIndex;                 //   4      Depends on bRequest
-    UINT16  wLength;                //   6      Depends on bRequest
+    /** End: Standard Device Requests ******************************/
 
-} SETUP_PKT, *PSETUP_PKT;
+} CTRL_TRF_SETUP, SETUP_PKT, *PSETUP_PKT;
 
 
 // ******************************************************************
@@ -398,6 +508,16 @@ typedef struct __attribute__ ((packed)) SetupPkt
 #define USB_SETUP_RECIPIENT_ENDPOINT            0x02    // Device Request bmRequestType recipient - endpoint
 #define USB_SETUP_RECIPIENT_OTHER               0x03    // Device Request bmRequestType recipient - other
 
+#define USB_SETUP_HOST_TO_DEVICE_BITFIELD       (USB_SETUP_HOST_TO_DEVICE>>7)       // Device Request bmRequestType transfer direction - host to device transfer - bit definition
+#define USB_SETUP_DEVICE_TO_HOST_BITFIELD       (USB_SETUP_DEVICE_TO_HOST>>7)       // Device Request bmRequestType transfer direction - device to host transfer - bit definition
+#define USB_SETUP_TYPE_STANDARD_BITFIELD        (USB_SETUP_TYPE_STANDARD>>5)        // Device Request bmRequestType type - standard
+#define USB_SETUP_TYPE_CLASS_BITFIELD           (USB_SETUP_TYPE_CLASS>>5)           // Device Request bmRequestType type - class
+#define USB_SETUP_TYPE_VENDOR_BITFIELD          (USB_SETUP_TYPE_VENDOR>>5)          // Device Request bmRequestType type - vendor
+#define USB_SETUP_RECIPIENT_DEVICE_BITFIELD     (USB_SETUP_RECIPIENT_DEVICE)        // Device Request bmRequestType recipient - device
+#define USB_SETUP_RECIPIENT_INTERFACE_BITFIELD  (USB_SETUP_RECIPIENT_INTERFACE)     // Device Request bmRequestType recipient - interface
+#define USB_SETUP_RECIPIENT_ENDPOINT_BITFIELD   (USB_SETUP_RECIPIENT_ENDPOINT)      // Device Request bmRequestType recipient - endpoint
+#define USB_SETUP_RECIPIENT_OTHER_BITFIELD      (USB_SETUP_RECIPIENT_OTHER)         // Device Request bmRequestType recipient - other
+
 // Section: OTG SET FEATURE Constants
 
 #define OTG_FEATURE_B_HNP_ENABLE                3       // SET FEATURE OTG - Enable B device to perform HNP
@@ -420,6 +540,76 @@ typedef struct __attribute__ ((packed)) SetupPkt
 // Section: USB Class Code Definitions
 #define USB_HUB_CLASSCODE                       0x09    //  Class code for a hub.
 
+/********************************************************************
+USB Endpoint Definitions
+USB Standard EP Address Format: DIR:X:X:X:EP3:EP2:EP1:EP0
+This is used in the descriptors. 
+********************************************************************/
+#define _EP_IN      0x80
+#define _EP_OUT     0x00
+#define _EP01_OUT   0x01
+#define _EP01_IN    0x81
+#define _EP02_OUT   0x02
+#define _EP02_IN    0x82
+#define _EP03_OUT   0x03
+#define _EP03_IN    0x83
+#define _EP04_OUT   0x04
+#define _EP04_IN    0x84
+#define _EP05_OUT   0x05
+#define _EP05_IN    0x85
+#define _EP06_OUT   0x06
+#define _EP06_IN    0x86
+#define _EP07_OUT   0x07
+#define _EP07_IN    0x87
+#define _EP08_OUT   0x08
+#define _EP08_IN    0x88
+#define _EP09_OUT   0x09
+#define _EP09_IN    0x89
+#define _EP10_OUT   0x0A
+#define _EP10_IN    0x8A
+#define _EP11_OUT   0x0B
+#define _EP11_IN    0x8B
+#define _EP12_OUT   0x0C
+#define _EP12_IN    0x8C
+#define _EP13_OUT   0x0D
+#define _EP13_IN    0x8D
+#define _EP14_OUT   0x0E
+#define _EP14_IN    0x8E
+#define _EP15_OUT   0x0F
+#define _EP15_IN    0x8F
+
+/* Configuration Attributes */
+#define _DEFAULT    (0x01<<7)       //Default Value (Bit 7 is set)
+#define _SELF       (0x01<<6)       //Self-powered (Supports if set)
+#define _RWU        (0x01<<5)       //Remote Wakeup (Supports if set)
+#define _HNP	    (0x01 << 1)     //HNP (Supports if set)
+#define _SRP	  	(0x01)		    //SRP (Supports if set)
+
+/* Endpoint Transfer Type */
+#define _CTRL       0x00            //Control Transfer
+#define _ISO        0x01            //Isochronous Transfer
+#define _BULK       0x02            //Bulk Transfer
+
+#define _INTERRUPT        0x03            //Interrupt Transfer
+#if defined(__18CXX) || defined(__C30__)
+    #define _INT        0x03            //Interrupt Transfer
+#endif
+
+/* Isochronous Endpoint Synchronization Type */
+#define _NS         (0x00<<2)       //No Synchronization
+#define _AS         (0x01<<2)       //Asynchronous
+#define _AD         (0x02<<2)       //Adaptive
+#define _SY         (0x03<<2)       //Synchronous
+
+/* Isochronous Endpoint Usage Type */
+#define _DE         (0x00<<4)       //Data endpoint
+#define _FE         (0x01<<4)       //Feedback endpoint
+#define _IE         (0x02<<4)       //Implicit feedback Data endpoint
+
+//These are the directional indicators used for the USBTransferOnePacket()
+//  function.
+#define OUT_FROM_HOST 0
+#define IN_TO_HOST 1
 
 #endif  // _USB_CH9_H_
 /*************************************************************************

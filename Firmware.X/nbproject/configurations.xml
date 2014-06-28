@@ -21,9 +21,10 @@
         <itemPath>USB/usb_ch9.h</itemPath>
         <itemPath>USB/usb_common.h</itemPath>
         <itemPath>USB/usb_device.h</itemPath>
-        <itemPath>USB/usb_function_cdc.h</itemPath>
         <itemPath>USB/usb_hal.h</itemPath>
         <itemPath>USB/usb_hal_pic32.h</itemPath>
+        <itemPath>USB/usb_function_hid.h</itemPath>
+        <itemPath>USB/usb_function_cdc.h</itemPath>
       </logicalFolder>
       <itemPath>hardware.h</itemPath>
       <itemPath>common.h</itemPath>
@@ -53,7 +54,7 @@
       <logicalFolder name="f2" displayName="USB Stack" projectFiles="true">
         <itemPath>USB/usb_descriptors.c</itemPath>
         <itemPath>USB/usb_device.c</itemPath>
-        <itemPath>USB/usb_function_cdc.c</itemPath>
+        <itemPath>USB/usb_function_hid.c</itemPath>
       </logicalFolder>
       <itemPath>dsp.c</itemPath>
       <itemPath>main.cpp</itemPath>

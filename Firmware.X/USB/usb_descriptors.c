@@ -157,7 +157,8 @@ state according to the definition in the USB specification.
 #include "GenericTypeDefs.h"
 #include "usb_config.h"
 #include "./USB/usb.h"
-#include "./USB/usb_function_cdc.h"
+//#include "./USB/usb_function_cdc.h"
+#include "./USB/usb_function_hid.h"
 
 /** CONSTANTS ******************************************************/
 #if defined(__18CXX)
@@ -170,12 +171,12 @@ ROM USB_DEVICE_DESCRIPTOR device_dsc=
     0x12,                   // Size of this descriptor in bytes
     USB_DESCRIPTOR_DEVICE,  // DEVICE descriptor type
     0x0200,                 // USB Spec Release Number in BCD format
-    CDC_DEVICE,             // Class Code
+    0x00,                   // Class Code
     0x00,                   // Subclass code
     0x00,                   // Protocol code
     USB_EP0_BUFF_SIZE,      // Max packet size for EP0, see usb_config.h
     0x04D8,                 // Vendor ID
-    0x000A,                 // Product ID: CDC RS-232 Emulation Demo
+    0x1E00,                 // Product ID: CDC RS-232 Emulation Demo
     0x0100,                 // Device release number in BCD format
     0x01,                   // Manufacturer string index
     0x02,                   // Product string index
@@ -188,84 +189,48 @@ ROM BYTE configDescriptor1[]={
     /* Configuration Descriptor */
     0x09,//sizeof(USB_CFG_DSC),    // Size of this descriptor in bytes
     USB_DESCRIPTOR_CONFIGURATION,                // CONFIGURATION descriptor type
-    67,0,                   // Total length of data for this cfg
-    2,                      // Number of interfaces in this cfg
+    0x29,0x00,            // Total length of data for this cfg
+    1,                      // Number of interfaces in this cfg
     1,                      // Index value of this configuration
     0,                      // Configuration string index
     _DEFAULT | _SELF,               // Attributes, see usb_device.h
     50,                     // Max power consumption (2X mA)
-							
+
     /* Interface Descriptor */
-    9,//sizeof(USB_INTF_DSC),   // Size of this descriptor in bytes
+    0x09,//sizeof(USB_INTF_DSC),   // Size of this descriptor in bytes
     USB_DESCRIPTOR_INTERFACE,               // INTERFACE descriptor type
     0,                      // Interface Number
     0,                      // Alternate Setting Number
-    1,                      // Number of endpoints in this intf
-    COMM_INTF,              // Class code
-    ABSTRACT_CONTROL_MODEL, // Subclass code
-    V25TER,                 // Protocol code
-    0,                      // Interface string index
-
-    /* CDC Class-Specific Descriptors */
-    sizeof(USB_CDC_HEADER_FN_DSC),
-    CS_INTERFACE,
-    DSC_FN_HEADER,
-    0x10,0x01,
-
-    sizeof(USB_CDC_ACM_FN_DSC),
-    CS_INTERFACE,
-    DSC_FN_ACM,
-    USB_CDC_ACM_FN_DSC_VAL,
-
-    sizeof(USB_CDC_UNION_FN_DSC),
-    CS_INTERFACE,
-    DSC_FN_UNION,
-    CDC_COMM_INTF_ID,
-    CDC_DATA_INTF_ID,
-
-    sizeof(USB_CDC_CALL_MGT_FN_DSC),
-    CS_INTERFACE,
-    DSC_FN_CALL_MGT,
-    0x00,
-    CDC_DATA_INTF_ID,
-
-    /* Endpoint Descriptor */
-    //sizeof(USB_EP_DSC),DSC_EP,_EP02_IN,_INT,CDC_INT_EP_SIZE,0x02,
-    0x07,/*sizeof(USB_EP_DSC)*/
-    USB_DESCRIPTOR_ENDPOINT,    //Endpoint Descriptor
-    _EP02_IN,            //EndpointAddress
-    _INTERRUPT,                       //Attributes
-    0x08,0x00,                  //size
-    0x02,                       //Interval
-
-    /* Interface Descriptor */
-    9,//sizeof(USB_INTF_DSC),   // Size of this descriptor in bytes
-    USB_DESCRIPTOR_INTERFACE,               // INTERFACE descriptor type
-    1,                      // Interface Number
-    0,                      // Alternate Setting Number
     2,                      // Number of endpoints in this intf
-    DATA_INTF,              // Class code
-    0,                      // Subclass code
-    NO_PROTOCOL,            // Protocol code
+    HID_INTF,               // Class code
+    0,     // Subclass code
+    0,     // Protocol code
     0,                      // Interface string index
-    
-    /* Endpoint Descriptor */
-    //sizeof(USB_EP_DSC),DSC_EP,_EP03_OUT,_BULK,CDC_BULK_OUT_EP_SIZE,0x00,
-    0x07,/*sizeof(USB_EP_DSC)*/
-    USB_DESCRIPTOR_ENDPOINT,    //Endpoint Descriptor
-    _EP03_OUT,            //EndpointAddress
-    _BULK,                       //Attributes
-    0x40,0x00,                  //size
-    0x00,                       //Interval
+
+    /* HID Class-Specific Descriptor */
+    0x09,//sizeof(USB_HID_DSC)+3,    // Size of this descriptor in bytes
+    DSC_HID,                // HID descriptor type
+    0x11,0x01,                 // HID Spec Release Number in BCD format (1.11)
+    0x00,                   // Country Code (0x00 for Not supported)
+    HID_NUM_OF_DSC,         // Number of class descriptors, see usbcfg.h
+    DSC_RPT,                // Report descriptor type
+    HID_RPT01_SIZE,0x00,//sizeof(hid_rpt01),      // Size of the report descriptor
 
     /* Endpoint Descriptor */
-    //sizeof(USB_EP_DSC),DSC_EP,_EP03_IN,_BULK,CDC_BULK_IN_EP_SIZE,0x00
     0x07,/*sizeof(USB_EP_DSC)*/
     USB_DESCRIPTOR_ENDPOINT,    //Endpoint Descriptor
-    _EP03_IN,            //EndpointAddress
-    _BULK,                       //Attributes
+    HID_EP | _EP_IN,                   //EndpointAddress
+    _INTERRUPT,                       //Attributes
     0x40,0x00,                  //size
-    0x00,                       //Interval
+    0x01,                        //Interval
+
+    /* Endpoint Descriptor */
+    0x07,/*sizeof(USB_EP_DSC)*/
+    USB_DESCRIPTOR_ENDPOINT,    //Endpoint Descriptor
+    HID_EP | _EP_OUT,                   //EndpointAddress
+    _INTERRUPT,                       //Attributes
+    0x40,0x00,                  //size
+    0x01                        //Interval
 };
 
 
@@ -274,17 +239,33 @@ ROM struct{BYTE bLength;BYTE bDscType;WORD string[1];}sd000={
 sizeof(sd000),USB_DESCRIPTOR_STRING,{0x0409}};
 
 //Manufacturer string descriptor
-ROM struct{BYTE bLength;BYTE bDscType;WORD string[25];}sd001={
+ROM struct{BYTE bLength;BYTE bDscType;WORD string[11];}sd001={
 sizeof(sd001),USB_DESCRIPTOR_STRING,
-{'M','i','c','r','o','c','h','i','p',' ',
-'T','e','c','h','n','o','l','o','g','y',' ','I','n','c','.'
-}};
+{'V','i','s','c','T','r','o','n','i','c','s'}};
 
 //Product string descriptor
-ROM struct{BYTE bLength;BYTE bDscType;WORD string[25];}sd002={
+ROM struct{BYTE bLength;BYTE bDscType;WORD string[19];}sd002={
 sizeof(sd002),USB_DESCRIPTOR_STRING,
-{'C','D','C',' ','R','S','-','2','3','2',' ',
-'E','m','u','l','a','t','i','o','n',' ','D','e','m','o'}
+{'H','e','x','L','i','g','h','t',' ','C','o','n','t','r','o','l','l','e','r'}
+};
+
+//Class specific descriptor - HID
+ROM struct{BYTE report[HID_RPT01_SIZE];}hid_rpt01={
+{
+    0x06, 0x00, 0xFF,       // Usage Page = 0xFF00 (Vendor Defined Page 1)
+    0x09, 0x01,             // Usage (Vendor Usage 1)
+    0xA1, 0x01,             // Collection (Application)
+    0x19, 0x01,             //      Usage Minimum
+    0x29, 0x40,             //      Usage Maximum 	//64 input usages total (0x01 to 0x40)
+    0x15, 0x01,             //      Logical Minimum (data bytes in the report may have minimum value = 0x00)
+    0x25, 0x40,      	  	//      Logical Maximum (data bytes in the report may have maximum value = 0x00FF = unsigned 255)
+    0x75, 0x08,             //      Report Size: 8-bit field size
+    0x95, 0x40,             //      Report Count: Make sixty-four 8-bit fields (the next time the parser hits an "Input", "Output", or "Feature" item)
+    0x81, 0x00,             //      Input (Data, Array, Abs): Instantiates input packet fields based on the above report size, count, logical min/max, and usage.
+    0x19, 0x01,             //      Usage Minimum
+    0x29, 0x40,             //      Usage Maximum 	//64 output usages total (0x01 to 0x40)
+    0x91, 0x00,             //      Output (Data, Array, Abs): Instantiates output packet fields.  Uses same report size and count as "Input" fields, since nothing new/different was specified to the parser since the "Input" item.
+    0xC0}                   // End Collection
 };
 
 //Array of configuration descriptors

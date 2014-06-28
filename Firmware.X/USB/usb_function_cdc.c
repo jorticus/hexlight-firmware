@@ -65,13 +65,7 @@
     
     ..\\Include
     
-    ..\\..\\Include
-    
-    ..\\..\\Microchip\\Include
-    
-    ..\\..\\\<Application Folder\>
-    
-    ..\\..\\..\\\<Application Folder\>
+    .
     
     If a different directory structure is used, modify the paths as
     required. An example using absolute paths instead of relative paths
@@ -82,14 +76,33 @@
     C:\\Microchip Solutions\\My Demo Application                                 
   ********************************************************************************/
 
+/********************************************************************
+ Change History:
+  Rev    Description
+  ----   -----------
+  2.3    Decricated the mUSBUSARTIsTxTrfReady() macro.  It is 
+         replaced by the USBUSARTIsTxTrfReady() function.
+
+  2.6    Minor definition changes
+
+  2.6a   No Changes
+
+  2.7    Fixed error in the part support list of the variables section
+         where the address of the CDC variables are defined.  The 
+         PIC18F2553 was incorrectly named PIC18F2453 and the PIC18F4558
+         was incorrectly named PIC18F4458.
+
+         http://www.microchip.com/forums/fb.aspx?m=487397
+
+  2.8    Minor change to CDCInitEP() to enhance ruggedness in
+         multithreaded usage scenarios.
+
+********************************************************************/
+
 /** I N C L U D E S **********************************************************/
-#include "GenericTypeDefs.h"
-#include "Compiler.h"
-#include "usb_config.h"
-#include "USB\usb_device.h"
-#include "USB\usb.h"
-#include "USB\usb_function_cdc.h"
-#include "hardware.h"
+#include "USB/usb.h"
+#include "USB/usb_function_cdc.h"
+//#include "HardwareProfile.h"
 
 #ifdef USB_USE_CDC
 
@@ -97,7 +110,7 @@
 #if defined(__18F14K50) || defined(__18F13K50) || defined(__18LF14K50) || defined(__18LF13K50) 
     #pragma udata usbram2
 #elif defined(__18F2455) || defined(__18F2550) || defined(__18F4455) || defined(__18F4550)\
-    || defined(__18F2458) || defined(__18F2453) || defined(__18F4558) || defined(__18F4553)
+    || defined(__18F2458) || defined(__18F2553) || defined(__18F4458) || defined(__18F4553)
     #pragma udata USB_VARIABLES=0x500
 #elif defined(__18F4450) || defined(__18F2450)
 	#pragma udata USB_VARIABLES=0x480
@@ -174,12 +187,12 @@ void USBCheckCDCRequest(void)
     /*
      * If request recipient is not an interface then return
      */
-    if(SetupPkt.Recipient != RCPT_INTF) return;
+    if(SetupPkt.Recipient != USB_SETUP_RECIPIENT_INTERFACE_BITFIELD) return;
 
     /*
      * If request type is not class-specific then return
      */
-    if(SetupPkt.RequestType != CLASS) return;
+    if(SetupPkt.RequestType != USB_SETUP_TYPE_CLASS_BITFIELD) return;
 
     /*
      * Interface ID must match interface numbers associated with
@@ -195,7 +208,7 @@ void USBCheckCDCRequest(void)
          //send the packet
             inPipes[0].pSrc.bRam = (BYTE*)&dummy_encapsulated_cmd_response;
             inPipes[0].wCount.Val = dummy_length;
-            inPipes[0].info.bits.ctrl_trf_mem = USB_INPIPES_RAM;
+            inPipes[0].info.bits.ctrl_trf_mem = USB_EP0_RAM;
             inPipes[0].info.bits.busy = 1;
             break;
         case GET_ENCAPSULATED_RESPONSE:
@@ -293,7 +306,6 @@ void CDCInitEP(void)
    	line_coding.bParityType = 0x00;             // None
    	line_coding.bDataBits = 0x08;               // 5,6,7,8, or 16
 
-    cdc_trf_state = CDC_TX_READY;
     cdc_rx_len = 0;
     
     /*
@@ -312,7 +324,53 @@ void CDCInitEP(void)
 
     CDCDataOutHandle = USBRxOnePacket(CDC_DATA_EP,(BYTE*)&cdc_data_rx,sizeof(cdc_data_rx));
     CDCDataInHandle = NULL;
+    
+    cdc_trf_state = CDC_TX_READY;
 }//end CDCInitEP
+
+/**********************************************************************************
+  Function:
+    BOOL USBCDCEventHandler(USB_EVENT event, void *pdata, WORD size)
+    
+  Summary:
+    Handles events from the USB stack.
+
+  Description:
+    Handles events from the USB stack.  This function should be called when there
+    is a USB event that needs to be processed by the CDC driver.
+    
+  Conditions:
+    Value of input argument 'len' should be smaller than the maximum
+    endpoint size responsible for receiving bulk data from USB host for CDC
+    class. Input argument 'buffer' should point to a buffer area that is
+    bigger or equal to the size specified by 'len'.
+  Input:
+    event - the type of event that occured
+    pdata - pointer to the data that caused the event
+    size - the size of the data that is pointed to by pdata
+                                                                                   
+  **********************************************************************************/
+BOOL USBCDCEventHandler(USB_EVENT event, void *pdata, WORD size)
+{
+    switch(event)
+    {  
+        case EVENT_TRANSFER_TERMINATED:
+            if(pdata == CDCDataOutHandle)
+            {
+                CDCDataOutHandle = USBRxOnePacket(CDC_DATA_EP,(BYTE*)&cdc_data_rx,sizeof(cdc_data_rx));  
+            }
+            if(pdata == CDCDataInHandle)
+            {
+                //flush all of the data in the CDC buffer
+                cdc_trf_state = CDC_TX_READY;
+                cdc_tx_len = 0;
+            }
+            break;
+        default:
+            return FALSE;
+    }      
+    return TRUE; 
+}
 
 /**********************************************************************************
   Function:
@@ -754,7 +812,7 @@ void CDCTxService(void)
         pCDCDst.bRam = (BYTE*)&cdc_data_tx; // Set destination pointer
         
         i = byte_to_send;
-        if(cdc_mem_type == _ROM)            // Determine type of memory source
+        if(cdc_mem_type == USB_EP0_ROM)            // Determine type of memory source
         {
             while(i)
             {

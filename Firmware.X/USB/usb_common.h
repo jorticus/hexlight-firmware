@@ -23,16 +23,9 @@ Description:
     folder (like the current demo folders), then the following include
     paths need to be added to the application's project:
     
-    ..\\Include
-    
-    ..\\..\\Include
-    
+    .
     ..\\..\\MicrochipInclude
-    
-    ..\\..\\\<Application Folder\>
-    
-    ..\\..\\..\\\<Application Folder\>
-    
+        
     If a different directory structure is used, modify the paths as
     required. An example using absolute paths instead of relative paths
     would be the following:
@@ -44,11 +37,11 @@ Description:
 //DOM-IGNORE-BEGIN
 /*******************************************************************************
 
-* FileName:        usb_common.h
-* Dependencies:    See included files, below.
-* Processor:       PIC18/PIC24/PIC32MX microcontrollers with USB module
-* Compiler:        C18 v3.13+/C30 v2.01+/C32 v0.00.18+
-* Company:         Microchip Technology, Inc.
+ FileName:        usb_common.h
+ Dependencies:    See included files, below.
+ Processor:       PIC18/PIC24/PIC32MX microcontrollers with USB module
+ Compiler:        C18 v3.13+/C30 v2.01+/C32 v0.00.18+
+ Company:         Microchip Technology, Inc.
 
 Software License Agreement
 
@@ -70,13 +63,18 @@ PARTICULAR PURPOSE APPLY TO THIS SOFTWARE. THE COMPANY SHALL NOT,
 IN ANY CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL OR
 CONSEQUENTIAL DAMAGES, FOR ANY REASON WHATSOEVER.
 
-Author          Date       Comments
---------------------------------------------------------------------------------
-BC/KO          15-Oct-2007 First release
-
-Change History:
-
 *******************************************************************************/
+//DOM-IGNORE-END
+
+//DOM-IGNORE-BEGIN
+/********************************************************************
+ Change History:
+  Rev    Description
+  ----   -----------
+  2.6    Moved many of the USB events
+  2.6a   Changed the limit of USB_EVENT from UINT_MAX to INT_MAX
+  2.7    No change
+********************************************************************/
 //DOM-IGNORE-END
 
 
@@ -86,9 +84,6 @@ Change History:
 //DOM-IGNORE-END
 
 #include <limits.h>
-#include "GenericTypeDefs.h"
-#include "usb_config.h"
-
 
 // *****************************************************************************
 // *****************************************************************************
@@ -186,7 +181,6 @@ typedef union
 
 } TRANSFER_FLAGS;
 
-
 // *****************************************************************************
 /* Data Transfer Flags, Endpoint Number Constants
 
@@ -251,45 +245,16 @@ typedef enum
 {
     // No event occured (NULL event)
     EVENT_NONE = 0,
-    
-    // A USB transfer has completed.  The data associated with this event is of
-    // the data type HOST_TRANSFER_DATA if the event is generated from the host
-    // stack.
-    EVENT_TRANSFER,
-    
-    // A USB Start of Frame token has been received.  This event is not
-    // used by the Host stack.
-    EVENT_SOF,                  
-    
-    // Device-mode resume received.  This event is not used by the Host stack.
-    EVENT_RESUME,
-    
-    // Device-mode suspend/idle event received.  This event is not used by the
-    // Host stack.
-    EVENT_SUSPEND,
-                  
-    // Device-mode bus reset received.  This event is not used by the Host 
-    // stack.                  
-    EVENT_RESET,                
-    
-    // Device-mode USB cable has been attached.  This event is not used by the
-    // Host stack.  The client driver may provide an application event when a
-    // device attaches.
-    EVENT_ATTACH,      
-             
-    // USB cable has been detached.  The data associated with this event is the
-    // address of detached device, a single BYTE.
-    EVENT_DETACH,               
-    
+
+    EVENT_DEVICE_STACK_BASE = 1,
+
+    EVENT_HOST_STACK_BASE = 100,
+
     // A USB hub has been attached.  Hub support is not currently available.
     EVENT_HUB_ATTACH,           
     
     // A stall has occured.  This event is not used by the Host stack.
-    EVENT_STALL,     
-               
-    // Device Mode: A setup packet received (data: SETUP_PKT).  This event is
-    // not used by the Host stack.
-    EVENT_SETUP,                
+    EVENT_STALL,                  
     
     // VBus SRP Pulse, (VBus > 2.0v),  Data: BYTE Port Number (For future support)
     EVENT_VBUS_SES_REQUEST,     
@@ -338,41 +303,83 @@ typedef enum
     EVENT_OUT_OF_MEMORY,        
     
     // Unspecified host error. (This error should not occur).
-    EVENT_UNSPECIFIED_ERROR,    
+    EVENT_UNSPECIFIED_ERROR,     
+             
+    // USB cable has been detached.  The data associated with this event is the
+    // address of detached device, a single BYTE.
+    EVENT_DETACH, 
+     
+    // A USB transfer has completed.  The data associated with this event is of
+    // the data type HOST_TRANSFER_DATA if the event is generated from the host
+    // stack.
+    EVENT_TRANSFER,
+    
+    // A USB Start of Frame token has been received.  This event is not
+    // used by the Host stack.
+    EVENT_SOF,                  
+    
+    // Device-mode resume received.  This event is not used by the Host stack.
+    EVENT_RESUME,
+    
+    // Device-mode suspend/idle event received.  This event is not used by the
+    // Host stack.
+    EVENT_SUSPEND,
+                  
+    // Device-mode bus reset received.  This event is not used by the Host 
+    // stack.                  
+    EVENT_RESET,  
+    
+    // In Host mode, an isochronous data read has completed.  This event will only
+    // be passed to the DataEventHandler, which is only utilized if it is defined.
+    // Note that the DataEventHandler is called from within the USB interrupt, so 
+    // it is critical that it return in time for the next isochronous data packet.
+    EVENT_DATA_ISOC_READ,
+    
+    // In Host mode, an isochronous data write has completed.  This event will only
+    // be passed to the DataEventHandler, which is only utilized if it is defined.  
+    // Note that the DataEventHandler is called from within the USB interrupt, so 
+    // it is critical that it return in time for the next isochronous data packet.
+    EVENT_DATA_ISOC_WRITE,
+    
+    // In Host mode, this event gives the application layer the option to reject
+    // a client driver that was selected by the stack.  This is needed when multiple
+    // devices are supported by class level support, but one configuration and client 
+    // driver is preferred over another.  Since configuration number is not guaranteed,
+    // the stack cannot do this automatically.  This event is issued only when 
+    // looking through configuration descriptors; the driver selected at the device 
+    // level cannot be overridden, since there shouldn't be any other options to 
+    // choose from.
+    EVENT_OVERRIDE_CLIENT_DRIVER_SELECTION,
 
-    // Notification that a SET_CONFIGURATION() command was received (device)
-    EVENT_CONFIGURED,
-
-    // A SET_DESCRIPTOR request was received (device)
-    EVENT_SET_DESCRIPTOR,
-
-    // An endpoint 0 request was received that the stack did not know how to
-    // handle.  This is most often a request for one of the class drivers.  
-    // Please refer to the class driver documenation for information related
-    // to what to do if this request is received. (device)
-    EVENT_EP0_REQUEST,
+    // In host mode, this event is thrown for every millisecond that passes.  Like all
+    // events, this is thrown from the USBHostTasks() or USBTasks() routine so its
+    // timeliness will be determined by the rate that these functions are called.  If
+    // they are not called very often, then the 1ms events will build up and be 
+    // dispatched as the USBTasks() or USBHostTasks() functions are called (one event
+    // per call to these functions.
+    EVENT_1MS,
 
     // Class-defined event offsets start here:
-    EVENT_GENERIC_BASE  = 100,      // Offset for Generic class events
+    EVENT_GENERIC_BASE  = 400,      // Offset for Generic class events
 
-    EVENT_MSD_BASE      = 200,      // Offset for Mass Storage Device class events
+    EVENT_MSD_BASE      = 500,      // Offset for Mass Storage Device class events
 
-    EVENT_HID_BASE      = 300,      // Offset for Human Interface Device class events
+    EVENT_HID_BASE      = 600,      // Offset for Human Interface Device class events
 
-    EVENT_PRINTER_BASE  = 400,      // Offset for Printer class events
+    EVENT_PRINTER_BASE  = 700,      // Offset for Printer class events
     
-    EVENT_CDC_BASE      = 500,      // Offset for CDC class events
+    EVENT_CDC_BASE      = 800,      // Offset for CDC class events
 
-    EVENT_CHARGER_BASE  = 600,      // Offset for Charger client driver events.
+    EVENT_CHARGER_BASE  = 900,      // Offset for Charger client driver events.
 
-    EVENT_AUDIO_BASE    = 700,      // Offset for Audio client driver events.
+    EVENT_AUDIO_BASE    = 1000,      // Offset for Audio client driver events.
         
 	EVENT_USER_BASE     = 10000,    // Add integral values to this event number
                                     // to create user-defined events.
 
     // There was a transfer error on the USB.  The data associated with this
     // event is of data type HOST_TRANSFER_DATA.
-    EVENT_BUS_ERROR     = UINT_MAX  
+    EVENT_BUS_ERROR     = INT_MAX  
 
 } USB_EVENT;
 
@@ -408,6 +415,22 @@ typedef struct _vbus_power_data
     BYTE            port;           // Physical port number
     BYTE            current;        // Current in 2mA units
 } USB_VBUS_POWER_EVENT_DATA;
+
+
+// *****************************************************************************
+/* USB_OVERRIDE_CLIENT_DRIVER_EVENT_DATA Data
+
+This data structure is passed to the application layer when a client driver is
+select, in case multiple client drivers can support a particular device.
+*/
+typedef struct _override_client_driver_data
+{        
+    WORD idVendor;              
+    WORD idProduct;             
+    BYTE bDeviceClass;          
+    BYTE bDeviceSubClass;       
+    BYTE bDeviceProtocol;       
+} USB_OVERRIDE_CLIENT_DRIVER_EVENT_DATA;
 
 
 // *****************************************************************************
@@ -508,7 +531,7 @@ typedef BOOL (*USB_EVENT_HANDLER) ( USB_EVENT event, void *data, unsigned int si
                         TRUE : FALSE
             #endif
         #else
-            #define USBInitialize(f) USBDEVInitialize(f)
+            #define USBInitialize(f) USBDeviceInit()
         #endif
     #else
         #if defined( USB_SUPPORT_HOST )
@@ -555,7 +578,7 @@ typedef BOOL (*USB_EVENT_HANDLER) ( USB_EVENT event, void *data, unsigned int si
                 #define USBTasks() {USBHostTasks(); USBHALHandleBusEvent();}
             #endif
         #else
-            #define USBTasks() USBHALHandleBusEvent()
+            #define USBTasks() USBDeviceTasks()
         #endif
     #else
         #if defined( USB_SUPPORT_HOST )
@@ -566,6 +589,10 @@ typedef BOOL (*USB_EVENT_HANDLER) ( USB_EVENT event, void *data, unsigned int si
     #endif
 #endif
 
+#define USB_PING_PONG__NO_PING_PONG         0x00    //0b00
+#define USB_PING_PONG__EP0_OUT_ONLY         0x01    //0b01
+#define USB_PING_PONG__FULL_PING_PONG       0x02    //0b10
+#define USB_PING_PONG__ALL_BUT_EP0          0x03    //0b11
 
 #endif // _USB_COMMON_H_
 /*************************************************************************

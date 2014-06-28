@@ -6,7 +6,8 @@
 
 extern "C" {
     #include "USB/usb.h"
-    #include "USB/usb_function_cdc.h"
+    //#include "USB/usb_function_cdc.h"
+    #include "USB/usb_function_hid.h"
 }
 #include "usb.h"
 
@@ -14,6 +15,12 @@ extern "C" {
 #include "comms.h"
 
 bool usb_sleeping = FALSE;
+
+USB_HANDLE USBOutHandle = 0;
+USB_HANDLE USBInHandle = 0;
+
+byte rx_buffer[64];
+byte tx_buffer[64];
 
 
 typedef struct {
@@ -37,9 +44,6 @@ typedef struct {
 ProtocolFramer cdcProtocolFramer;
 
 void USBUserProcess(void) {
-    //TODO: How can we abstract USB/UART comms a bit better?
-    static byte rx_buffer[64];
-    static byte tx_buffer[64];
     int numBytesRead;
     static int numBytesToWrite = 0;
 
@@ -49,42 +53,23 @@ void USBUserProcess(void) {
     }
     _LAT(PIO_LED_USB) = HIGH;
 
+    if (!HIDRxHandleBusy(USBOutHandle)) { //Check if data was received from the host.
 
-    numBytesRead = getsUSBUSART((char*)rx_buffer, 64);
-    if (numBytesRead != 0) {
-        int result = cdcProtocolFramer.ProcessData(rx_buffer, numBytesRead);
+        int result = cdcProtocolFramer.ProcessData(rx_buffer, sizeof(rx_buffer));
 
         if (cdcProtocolFramer.tx_idx > 0) {
             numBytesToWrite = cdcProtocolFramer.tx_idx;
             for (int i=0; i<numBytesToWrite; i++)
                 tx_buffer[i] = cdcProtocolFramer.tx_buffer[i];
+
+            if (!HIDTxHandleBusy(USBInHandle)) {
+                USBInHandle = HIDTxPacket(HID_EP, (byte*)tx_buffer, numBytesToWrite);
+            }
         }
 
-        /*if (cdcProtocolFramer.rx_idx > 0) {
-            for (int i=0; i<cdcProtocolFramer.rx_idx; i++)
-                tx_buffer[i] = cdcProtocolFramer.rx_buffer[i];
-            numBytesToWrite = cdcProtocolFramer.rx_idx;
-            cdcProtocolFramer.rx_idx = 0;
-        } else {
-            tx_buffer[0] = result;
-            numBytesToWrite = 1;
-        }*/
-
-        /*if (result > 0) {
-            numBytesToWrite = result; // Need to wait for Trf to be ready before transmitting
-        } else if (result < 0) {
-            // Packet error
-            tx_buffer[0] = (byte)-result;
-            numBytesToWrite = 1;
-        }*/
+        //Re-arm the OUT endpoint for the next packet
+        USBOutHandle = HIDRxPacket(HID_EP, (byte*)rx_buffer, sizeof(rx_buffer));
     }
-
-    if (numBytesToWrite > 0 && USBUSARTIsTxTrfReady()) {
-        putUSBUSART((char*)tx_buffer, numBytesToWrite);
-        numBytesToWrite = 0;
-    }
-
-    CDCTxService();
 }
 
 
@@ -124,6 +109,13 @@ void USBCBSendResume() {
     USBResumeControl = 0;
 }
 
+void USBCBInitEP(void)
+{
+    //enable the HID endpoint
+    USBEnableEndpoint(HID_EP,USB_IN_ENABLED|USB_OUT_ENABLED|USB_HANDSHAKE_ENABLED|USB_DISALLOW_SETUP);
+    //Re-arm the OUT endpoint for the next packet
+    USBOutHandle = HIDRxPacket(HID_EP,(BYTE*)&rx_buffer,sizeof(rx_buffer));
+}
 
 
 extern "C" {
@@ -140,14 +132,16 @@ BOOL USER_USB_CALLBACK_EVENT_HANDLER(USB_EVENT event, void *pdata, WORD size)
     {
         case EVENT_CONFIGURED:
             //USBCBInitEP();
-            CDCInitEP();
+            //CDCInitEP();
+            USBCBInitEP();
             break;
         case EVENT_SET_DESCRIPTOR:
             //USBCBStdSetDscHandler();
             break;
         case EVENT_EP0_REQUEST:
             //USBCBCheckOtherReq();
-            USBCheckCDCRequest();
+            //USBCheckCDCRequest();
+            USBCheckHIDRequest();
             break;
         case EVENT_SOF:
             USBCB_SOF_Handler();

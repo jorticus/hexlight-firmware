@@ -111,7 +111,8 @@
 //#define USB_ENABLE_TRANSFER_COMPLETE_HANDLER
 
 /** DEVICE CLASS USAGE *********************************************/
-#define USB_USE_CDC
+//#define USB_USE_CDC
+#define USB_USE_HID
 
 /** ENDPOINTS ALLOCATION *******************************************/
 #define USB_MAX_EP_NUMBER	    3
@@ -128,6 +129,17 @@
 
 //#define USB_CDC_SUPPORT_ABSTRACT_CONTROL_MANAGEMENT_CAPABILITIES_D2 //Send_Break command
 #define USB_CDC_SUPPORT_ABSTRACT_CONTROL_MANAGEMENT_CAPABILITIES_D1 //Set_Line_Coding, Set_Control_Line_State, Get_Line_Coding, and Serial_State commands
+
+
+/* HID */
+#define HID_INTF_ID             0x00
+#define HID_EP 					1
+#define HID_INT_OUT_EP_SIZE     3
+#define HID_INT_IN_EP_SIZE      3
+#define HID_NUM_OF_DSC          1
+#define HID_RPT01_SIZE          28
+
+
 /** DEFINITIONS ****************************************************/
 
 #endif //USBCFG_H

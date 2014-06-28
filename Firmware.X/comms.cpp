@@ -6,7 +6,6 @@
 
 #include "pwm.h"
 #include "colourengine.h"
-#include "USB/usb_hal_pic32.h"
 
 
 int ProcessCommand(byte command, byte* payload_data, byte payload_len, byte* reply_data, uint* reply_len) {
