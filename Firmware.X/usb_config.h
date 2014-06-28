@@ -111,8 +111,10 @@
 //#define USB_ENABLE_TRANSFER_COMPLETE_HANDLER
 
 /** DEVICE CLASS USAGE *********************************************/
+
 //#define USB_USE_CDC
-#define USB_USE_HID
+//#define USB_USE_HID
+#define USB_USE_AUDIO_CLASS
 
 /** ENDPOINTS ALLOCATION *******************************************/
 #define USB_MAX_EP_NUMBER	    3
@@ -139,6 +141,22 @@
 #define HID_NUM_OF_DSC          1
 #define HID_RPT01_SIZE          28
 
+
+/* Audio */
+#define AUDIO_CONTROL_INTERFACE_ID 0x00
+#define AUDIO_STREAMING_INTERFACE_ID 0x01
+
+#define ID_INPUT_TERMINAL  0x01
+#define ID_OUTPUT_TERMINAL 0x02
+#define ID_MIXER_UNIT      0x03
+#define ID_SELECTOR_UNIT   0x04
+#define ID_FEATURE_UNIT    0x05
+#define ID_PROCESSING_UNIT 0x06
+#define ID_EXTENSION_UNIT  0x07
+
+#define AS_EP             1
+
+#define NO_OF_BYTES_TRANSFRED_IN_A_USB_FRAME 16
 
 /** DEFINITIONS ****************************************************/
 

@@ -31,6 +31,7 @@
       <itemPath>hardwareUBW32.h</itemPath>
       <itemPath>hardwareHexRGB.h</itemPath>
       <itemPath>dsp.h</itemPath>
+      <itemPath>usb_config.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -55,6 +56,8 @@
         <itemPath>USB/usb_descriptors.c</itemPath>
         <itemPath>USB/usb_device.c</itemPath>
         <itemPath>USB/usb_function_hid.c</itemPath>
+        <itemPath>USB/usb_function_cdc.c</itemPath>
+        <itemPath>USB/usb_function_audio.c</itemPath>
       </logicalFolder>
       <itemPath>dsp.c</itemPath>
       <itemPath>main.cpp</itemPath>

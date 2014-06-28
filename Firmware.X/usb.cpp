@@ -6,8 +6,10 @@
 
 extern "C" {
     #include "USB/usb.h"
-    //#include "USB/usb_function_cdc.h"
+    #include "USB/usb_function_cdc.h"
     #include "USB/usb_function_hid.h"
+    #include "USB/usb_function_audio.h"
+    #include "test_audio.h"
 }
 #include "usb.h"
 
@@ -16,8 +18,19 @@ extern "C" {
 
 bool usb_sleeping = FALSE;
 
+#ifdef USB_USE_HID
 USB_HANDLE USBOutHandle = 0;
 USB_HANDLE USBInHandle = 0;
+#endif
+
+#ifdef USB_USE_AUDIO_CLASS
+USB_HANDLE USBAudioTxHandle = 0;
+USB_HANDLE USBAudioRxHandle = 0;
+int transferUnderProgress  =0;
+unsigned long FrameCounter =0;
+unsigned char FrameData[16];
+#endif
+
 
 byte rx_buffer[64];
 byte tx_buffer[64];
@@ -43,6 +56,30 @@ typedef struct {
 
 ProtocolFramer cdcProtocolFramer;
 
+#ifdef USB_USE_AUDIO_CLASS
+void EmulateMicrophone(void)
+ {
+     unsigned char sampleCounter;
+     if(!USBHandleBusy(USBAudioTxHandle))
+     {
+         for(sampleCounter =0; sampleCounter < NO_OF_BYTES_TRANSFRED_IN_A_USB_FRAME; sampleCounter=sampleCounter+2)
+         {
+             FrameData[sampleCounter] =   audioSamples[FrameCounter+sampleCounter];
+             FrameData[sampleCounter+1] = audioSamples[FrameCounter+sampleCounter+1];
+         }
+         FrameCounter += NO_OF_BYTES_TRANSFRED_IN_A_USB_FRAME;
+         if (FrameCounter >= sizeof(audioSamples)/sizeof(UINT))
+         {
+             FrameCounter = 0;
+             transferUnderProgress = 0;
+         }
+         USBAudioTxHandle = USBTxOnePacket(AS_EP , FrameData,NO_OF_BYTES_TRANSFRED_IN_A_USB_FRAME);
+     }
+
+ }// End of EmulateMicrophone
+#endif
+
+
 void USBUserProcess(void) {
     int numBytesRead;
     static int numBytesToWrite = 0;
@@ -53,25 +90,85 @@ void USBUserProcess(void) {
     }
     _LAT(PIO_LED_USB) = HIGH;
 
+#ifdef USB_USE_HID
+
     if (!HIDRxHandleBusy(USBOutHandle)) { //Check if data was received from the host.
 
         int result = cdcProtocolFramer.ProcessData(rx_buffer, sizeof(rx_buffer));
+
+        // Clear TX buffer
+        for (int i=0; i<sizeof(tx_buffer); i++)
+            tx_buffer[i] = 0;
 
         if (cdcProtocolFramer.tx_idx > 0) {
             numBytesToWrite = cdcProtocolFramer.tx_idx;
             for (int i=0; i<numBytesToWrite; i++)
                 tx_buffer[i] = cdcProtocolFramer.tx_buffer[i];
+        }
 
-            if (!HIDTxHandleBusy(USBInHandle)) {
-                USBInHandle = HIDTxPacket(HID_EP, (byte*)tx_buffer, numBytesToWrite);
-            }
+        if (!HIDTxHandleBusy(USBInHandle)) {
+            USBInHandle = HIDTxPacket(HID_EP, (byte*)tx_buffer, sizeof(tx_buffer));
         }
 
         //Re-arm the OUT endpoint for the next packet
         USBOutHandle = HIDRxPacket(HID_EP, (byte*)rx_buffer, sizeof(rx_buffer));
     }
+
+#endif
+#ifdef USB_USE_CDC
+    
+    numBytesRead = getsUSBUSART((char*)rx_buffer, 64);
+    if (numBytesRead != 0) {
+        int result = cdcProtocolFramer.ProcessData(rx_buffer, numBytesRead);
+
+        if (cdcProtocolFramer.tx_idx > 0) {
+            numBytesToWrite = cdcProtocolFramer.tx_idx;
+            for (int i=0; i<numBytesToWrite; i++)
+                tx_buffer[i] = cdcProtocolFramer.tx_buffer[i];
+        }
+    }
+
+    if (numBytesToWrite > 0 && USBUSARTIsTxTrfReady()) {
+        putUSBUSART((char*)tx_buffer, numBytesToWrite);
+        numBytesToWrite = 0;
+    }
+
+    CDCTxService();
+
+#endif
+#ifdef USB_USE_AUDIO_CLASS
+    EmulateMicrophone();
+#endif
+
+
+
 }
 
+void USBCBInitEP(void)
+{
+#ifdef USB_USE_HID
+    //enable the HID endpoint
+    USBEnableEndpoint(HID_EP,USB_IN_ENABLED|USB_OUT_ENABLED|USB_HANDSHAKE_ENABLED|USB_DISALLOW_SETUP);
+    //Re-arm the OUT endpoint for the next packet
+    USBOutHandle = HIDRxPacket(HID_EP,(BYTE*)&rx_buffer,sizeof(rx_buffer));
+#endif
+#ifdef USB_USE_CDC
+    CDCInitEP();
+#endif
+#ifdef USB_USE_AUDIO_CLASS
+    //enable the Audio Streaming(Isochronous) endpoint
+    USBEnableEndpoint(AS_EP ,USB_OUT_ENABLED|USB_IN_ENABLED|USB_DISALLOW_SETUP);
+#endif
+}
+
+void USBCBCheckOtherReq() {
+#ifdef USB_USE_CDC
+    USBCheckCDCRequest();
+#endif
+#ifdef USB_USE_HID
+    USBCheckHIDRequest();
+#endif
+}
 
 void USBCBSuspend() {
     // Called when the PC wants to power-down this device
@@ -95,6 +192,8 @@ void USBCBErrorHandler() {
 }
 
 
+
+
 void USBCBSendResume() {
     // Call this to wake the PC up from sleep
     static WORD delay_count;
@@ -109,13 +208,7 @@ void USBCBSendResume() {
     USBResumeControl = 0;
 }
 
-void USBCBInitEP(void)
-{
-    //enable the HID endpoint
-    USBEnableEndpoint(HID_EP,USB_IN_ENABLED|USB_OUT_ENABLED|USB_HANDSHAKE_ENABLED|USB_DISALLOW_SETUP);
-    //Re-arm the OUT endpoint for the next packet
-    USBOutHandle = HIDRxPacket(HID_EP,(BYTE*)&rx_buffer,sizeof(rx_buffer));
-}
+
 
 
 extern "C" {
@@ -131,17 +224,13 @@ BOOL USER_USB_CALLBACK_EVENT_HANDLER(USB_EVENT event, void *pdata, WORD size)
     switch(event)
     {
         case EVENT_CONFIGURED:
-            //USBCBInitEP();
-            //CDCInitEP();
             USBCBInitEP();
             break;
         case EVENT_SET_DESCRIPTOR:
             //USBCBStdSetDscHandler();
             break;
         case EVENT_EP0_REQUEST:
-            //USBCBCheckOtherReq();
-            //USBCheckCDCRequest();
-            USBCheckHIDRequest();
+            USBCBCheckOtherReq();
             break;
         case EVENT_SOF:
             USBCB_SOF_Handler();
@@ -167,3 +256,6 @@ BOOL USER_USB_CALLBACK_EVENT_HANDLER(USB_EVENT event, void *pdata, WORD size)
 }
 
 }
+
+
+
