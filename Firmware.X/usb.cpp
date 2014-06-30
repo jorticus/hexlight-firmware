@@ -29,6 +29,9 @@ USB_HANDLE USBAudioRxHandle = 0;
 int transferUnderProgress  =0;
 unsigned long FrameCounter =0;
 unsigned char FrameData[16];
+
+bool enableUsbAudio = false;
+
 #endif
 
 
@@ -56,29 +59,6 @@ typedef struct {
 
 ProtocolFramer cdcProtocolFramer;
 
-#ifdef USB_USE_AUDIO_CLASS
-void EmulateMicrophone(void)
- {
-     unsigned char sampleCounter;
-     if(!USBHandleBusy(USBAudioTxHandle))
-     {
-         for(sampleCounter =0; sampleCounter < NO_OF_BYTES_TRANSFRED_IN_A_USB_FRAME; sampleCounter=sampleCounter+2)
-         {
-             FrameData[sampleCounter] =   audioSamples[FrameCounter+sampleCounter];
-             FrameData[sampleCounter+1] = audioSamples[FrameCounter+sampleCounter+1];
-         }
-         FrameCounter += NO_OF_BYTES_TRANSFRED_IN_A_USB_FRAME;
-         if (FrameCounter >= sizeof(audioSamples)/sizeof(UINT))
-         {
-             FrameCounter = 0;
-             transferUnderProgress = 0;
-         }
-         USBAudioTxHandle = USBTxOnePacket(AS_EP , FrameData,NO_OF_BYTES_TRANSFRED_IN_A_USB_FRAME);
-     }
-
- }// End of EmulateMicrophone
-#endif
-
 
 void USBUserProcess(void) {
     int numBytesRead;
@@ -92,13 +72,13 @@ void USBUserProcess(void) {
 
 #ifdef USB_USE_HID
 
-    if (!HIDRxHandleBusy(USBOutHandle)) { //Check if data was received from the host.
+    if (!HIDRxHandleBusy(USBOutHandle) && !HIDTxHandleBusy(USBInHandle)) { //Check if data was received from the host.
 
         int result = cdcProtocolFramer.ProcessData(rx_buffer, sizeof(rx_buffer));
 
         // Clear TX buffer
         for (int i=0; i<sizeof(tx_buffer); i++)
-            tx_buffer[i] = 0;
+            tx_buffer[i] = 0xFF;
 
         if (cdcProtocolFramer.tx_idx > 0) {
             numBytesToWrite = cdcProtocolFramer.tx_idx;
@@ -106,9 +86,7 @@ void USBUserProcess(void) {
                 tx_buffer[i] = cdcProtocolFramer.tx_buffer[i];
         }
 
-        if (!HIDTxHandleBusy(USBInHandle)) {
-            USBInHandle = HIDTxPacket(HID_EP, (byte*)tx_buffer, sizeof(tx_buffer));
-        }
+        USBInHandle = HIDTxPacket(HID_EP, (byte*)tx_buffer, sizeof(tx_buffer));
 
         //Re-arm the OUT endpoint for the next packet
         USBOutHandle = HIDRxPacket(HID_EP, (byte*)rx_buffer, sizeof(rx_buffer));
@@ -137,11 +115,24 @@ void USBUserProcess(void) {
 
 #endif
 #ifdef USB_USE_AUDIO_CLASS
-    EmulateMicrophone();
+
+    if (enableUsbAudio) {
+        unsigned char sampleCounter;
+        if(!USBHandleBusy(USBAudioTxHandle)) {
+            for(sampleCounter =0; sampleCounter < NO_OF_BYTES_TRANSFRED_IN_A_USB_FRAME; sampleCounter=sampleCounter+2) {
+                FrameData[sampleCounter] =   audioSamples[FrameCounter+sampleCounter];
+                FrameData[sampleCounter+1] = audioSamples[FrameCounter+sampleCounter+1];
+            }
+            FrameCounter += NO_OF_BYTES_TRANSFRED_IN_A_USB_FRAME;
+            if (FrameCounter >= sizeof(audioSamples)/sizeof(UINT)) {
+                FrameCounter = 0;
+                transferUnderProgress = 0;
+            }
+            USBAudioTxHandle = USBTxOnePacket(AS_EP , FrameData,NO_OF_BYTES_TRANSFRED_IN_A_USB_FRAME);
+        }
+    }
+     
 #endif
-
-
-
 }
 
 void USBCBInitEP(void)

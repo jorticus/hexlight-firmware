@@ -115,6 +115,8 @@ typedef enum { MODE_HOST_CONTROL, MODE_TRIG, MODE_CYCLE, MODE_AUDIO } pl_mode;
 #define CMD_SET_XYZ_CAL 0x20
 #define CMD_GET_XYZ_CAL 0x21
 
+#define CMD_ENABLE_USBAUDIO 0x30
+
 #define CMD_ACK 0xFF
 
 

@@ -7,10 +7,12 @@
 #include "pwm.h"
 #include "colourengine.h"
 
+extern bool enableUsbAudio;
 
 int ProcessCommand(byte command, byte* payload_data, byte payload_len, byte* reply_data, uint* reply_len) {
     // NOTE: reply_data is assumed to contain at least MAX_PAYLOAD_SIZE bytes
     *reply_len = 0;
+    toggle(PIO_LED3);
 
     switch (command) {
         case CMD_TEST:
@@ -60,11 +62,19 @@ int ProcessCommand(byte command, byte* payload_data, byte payload_len, byte* rep
             }
             break;
 
-        case CMD_GET_XYY:
+        /*case CMD_GET_XYY:
             XYYColour* payload = (XYYColour*)reply_data;
             *reply_len = sizeof(XYYColour);
             *payload = ColourEngine::GetXYY();
             return RESULT_SUCCESS;
+            break;*/
+
+        case CMD_ENABLE_USBAUDIO:
+            enableUsbAudio = (bool)reply_data[0];
+            _LAT(PIO_LED1) = enableUsbAudio;
+            return RESULT_SUCCESS;
+            break;
+
     }
     return RESULT_ERROR;
 }
