@@ -137,7 +137,9 @@ void USBUserProcess(void) {
     bool hasAudio = false;
     static byte buf[NO_OF_BYTES_TRANSFRED_IN_A_USB_FRAME];
 
-    // The USB pipe will limit data throughput to the configured sample rate (see usb_descriptors.c)
+    //TODO: The audio does not transfer very cleanly. Probably something to do with
+    //  the time between finishing a buffer and waiting for the next one to come.
+
     if(!USBHandleBusy(USBAudioTxHandle)) {
         if (enableUsbAudio) {
             if (flag_ready || transferUnderProgress) {
@@ -152,6 +154,7 @@ void USBUserProcess(void) {
 
                 frameCounter += NO_OF_BYTES_TRANSFRED_IN_A_USB_FRAME;
                 hasAudio = true;
+                USBAudioTxHandle = USBTxOnePacket(AS_EP, buf, NO_OF_BYTES_TRANSFRED_IN_A_USB_FRAME);
 
                 if (frameCounter >= (AUDIO_BUFFER_SIZE*sizeof(UINT16))) {
                     frameCounter = 0;
@@ -159,13 +162,14 @@ void USBUserProcess(void) {
                     flag_processing = false;
                 }
             }
-        }
+        } else {
 
-        if (!hasAudio) {
+
             for (int i=0; i<NO_OF_BYTES_TRANSFRED_IN_A_USB_FRAME; i++)
                 buf[i] = 0;
+
+            USBAudioTxHandle = USBTxOnePacket(AS_EP, buf, NO_OF_BYTES_TRANSFRED_IN_A_USB_FRAME);
         }
-        USBAudioTxHandle = USBTxOnePacket(AS_EP, buf, NO_OF_BYTES_TRANSFRED_IN_A_USB_FRAME);
     }
 
 #endif

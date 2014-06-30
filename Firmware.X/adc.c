@@ -25,12 +25,8 @@
 // implementation if the FFT requires a very large buffer? ie. the circular buffer is updated
 // in chunks.
 
-#define OVERSAMPLING 1
-#define SAMPLE_RATE (44100*OVERSAMPLING) // Hz
-
-#if OVERSAMPLING > 16
-    #error Oversampling is limited to between 1-16 times
-#endif
+#define OVERSAMPLING 8
+#define SAMPLE_RATE (22050*OVERSAMPLING) // Hz
 
 
 ///// Internal Variables //////
@@ -50,8 +46,8 @@ static volatile uint write_idx = 0;
 
 ///// Macros /////
 
-//#define ADC_SAMPLES_PER_INT_x (OVERSAMPLING << _AD1CON2_SMPI_POSITION)
-#define ADC_SAMPLES_PER_INT_x ADC_SAMPLES_PER_INT_1
+//#define ADC_SAMPLES_PER_INT_x ((OVERSAMPLING-1) << _AD1CON2_SMPI_POSITION)
+#define ADC_SAMPLES_PER_INT_x ADC_SAMPLES_PER_INT_8
 
 ///// Code /////
 
@@ -100,7 +96,7 @@ void ADCInitialize() {
 
     ///// Configure ADC trigger timebase /////
     // NB: Only Timer3 can be used for triggering the ADC
-    OpenTimer3(T3_IDLE_CON | T3_GATE_OFF | T3_PS_1_1 | T3_SOURCE_INT, pb_clock/2/SAMPLE_RATE);
+    OpenTimer3(T3_IDLE_CON | T3_GATE_OFF | T3_PS_1_1 | T3_SOURCE_INT, pb_clock/SAMPLE_RATE);
 
     // Enable interrupt for debugging
     /*INTSetVectorPriority(INT_T3, 5);
@@ -186,25 +182,12 @@ void __ISR(_ADC_VECTOR, IPL6) adc_isr(void) {
     // Called when the ADC has finished sampling N samples
     _LAT(PIO_LED3) = 1;
 
-    // Average N samples into one and add to the buffer
-    #if OVERSAMPLING > 1
-        uint i;
-        unsigned long sample = 0;
-        uint* buf = (uint*)&ADC1BUF0;
-        for (i=0; i<OVERSAMPLING; i++) {
-            sample += buf[i];
-        }
-        sample /= OVERSAMPLING;
-        write_buf[write_idx] = (UINT16)sample;
-    #else
-//        write_buf[write_idx] = (UINT16)ADC1BUF0;
-    #endif
+    //write_buf[write_idx++] = (UINT16)ADC1BUF0;
 
-    write_buf[write_idx++] = (UINT16)ADC1BUF0;
-    //write_buf[write_idx++] = (UINT16)ADC1BUF1;
-    //write_buf[write_idx++] = (UINT16)ADC1BUF2;
-    //write_buf[write_idx++] = (UINT16)ADC1BUF3;
-
+    // Super-sampling
+    uint avg = (UINT16)ADC1BUF0 + (UINT16)ADC1BUF1 + (UINT16)ADC1BUF2 + (UINT16)ADC1BUF3 +
+               (UINT16)ADC1BUF4 + (UINT16)ADC1BUF5 + (UINT16)ADC1BUF6 + (UINT16)ADC1BUF7;
+    write_buf[write_idx++] = (UINT16)(avg / 8);
 
     // Update the buffer
     if (write_idx == BUFFER_SIZE) {

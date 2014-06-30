@@ -430,7 +430,10 @@ ROM BYTE configDescriptor1[]={
 	0x02,						 // Two bytes per audio subframe.(bSubFrameSize)
 	0x10,						 // 16 bits per sample.(bBitResolution)
 	0x01,						 // One frequency supported. (bSamFreqType)
-	0x40,0x1F,0x00,				 // 8000Hz. (tSamFreq)
+	//0x40,0x1F,0x00,				 // 8000Hz. (tSamFreq)
+    //0x1D,0x29,0x00, // 10,525Hz
+    0x22,0x56,0x00, // 21050Hz
+    //0x44,0xAC,0x00,  // 44100Hz
 
 	/*  USB Microphone Standard Endpoint Descriptor */
 	0x09,					    // Size of the descriptor, in bytes (bLength)
