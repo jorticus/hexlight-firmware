@@ -74,7 +74,7 @@ int ProcessCommand(byte command, byte* payload_data, byte payload_len, byte* rep
 
         case CMD_ENABLE_USBAUDIO:
             if (payload_len == 1) {
-                enableUsbAudio = (bool)reply_data[0];
+                enableUsbAudio = (bool)payload_data[0];
                 _LAT(PIO_LED1) = enableUsbAudio;
                 return RESULT_SUCCESS;
             } else return ERROR_INVALID_PAYLOAD;
@@ -208,7 +208,7 @@ int ProtocolFramer::ProcessFrame(byte* buf, uint len) {
         return ERROR_PAYLOAD_TOO_SMALL; // Not enough bytes in frame for the payload? Unlikely.
 
     // Check the CRC
-    packet_footer_t* footer = (packet_footer_t*)(data + header->length);
+    packet_footer_t* footer = (packet_footer_t*)(data + sizeof(packet_header_t) + header->length);
     UINT16 crc = 0;
     //TODO: Calculate CRC
     if (crc != footer->crc)
