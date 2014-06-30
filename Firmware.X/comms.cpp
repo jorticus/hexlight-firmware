@@ -16,17 +16,20 @@ int ProcessCommand(byte command, byte* payload_data, byte payload_len, byte* rep
 
     switch (command) {
         case CMD_TEST:
+            if (payload_len != 0) return ERROR_INVALID_PAYLOAD;
             reply_data[0] = 123;
             *reply_len = 1;
             return RESULT_SUCCESS;
             break;
 
         case CMD_POWER_OFF:
+            if (payload_len != 0) return ERROR_INVALID_PAYLOAD;
             ColourEngine::PowerOff();
             return RESULT_SUCCESS;
             break;
 
         case CMD_POWER_ON:
+            if (payload_len != 0) return ERROR_INVALID_PAYLOAD;
             ColourEngine::PowerOn();
             return RESULT_SUCCESS;
             break;
@@ -41,7 +44,7 @@ int ProcessCommand(byte command, byte* payload_data, byte payload_len, byte* rep
                 pl_pwm_t* payload = (pl_pwm_t*)payload_data;
                 PWMUpdate(payload->ch1, payload->ch2, payload->ch3, payload->ch4);
                 return RESULT_SUCCESS;
-            }
+            } else return ERROR_INVALID_PAYLOAD;
             break;
 
         // Update the outputs using device-independant colour
@@ -50,7 +53,7 @@ int ProcessCommand(byte command, byte* payload_data, byte payload_len, byte* rep
                 XYYColour* payload = (XYYColour*)payload_data;
                 ColourEngine::SetXYY(*payload);
                 return RESULT_SUCCESS;
-            }
+            } else return ERROR_INVALID_PAYLOAD;
             break;
 
         // Update the outputs using device-independant colour
@@ -59,7 +62,7 @@ int ProcessCommand(byte command, byte* payload_data, byte payload_len, byte* rep
                 XYZColour* payload = (XYZColour*)payload_data;
                 ColourEngine::SetXYZ(*payload);
                 return RESULT_SUCCESS;
-            }
+            } else return ERROR_INVALID_PAYLOAD;
             break;
 
         /*case CMD_GET_XYY:
@@ -70,13 +73,15 @@ int ProcessCommand(byte command, byte* payload_data, byte payload_len, byte* rep
             break;*/
 
         case CMD_ENABLE_USBAUDIO:
-            enableUsbAudio = (bool)reply_data[0];
-            _LAT(PIO_LED1) = enableUsbAudio;
-            return RESULT_SUCCESS;
+            if (payload_len == 1) {
+                enableUsbAudio = (bool)reply_data[0];
+                _LAT(PIO_LED1) = enableUsbAudio;
+                return RESULT_SUCCESS;
+            } else return ERROR_INVALID_PAYLOAD;
             break;
 
     }
-    return RESULT_ERROR;
+    return ERROR_INVALID_COMMAND;
 }
 
 int UnescapeData(byte* src_buf, byte* dst_buf, uint src_len, uint dst_len) {
@@ -122,12 +127,16 @@ int EscapeData(byte* src_buf, byte* dst_buf, uint src_len, uint dst_len) {
 }
 
 
-bool ProtocolFramer::ProcessData(byte* buf, int len) {
-    _LAT(PIO_LED2) = LOW;
+int ProtocolFramer::ProcessData(byte* buf, int len) {
+    tx_size = 0;
+    int result;
+
     for (int i=0; i<len; i++) {
-        if (ProcessByte(buf[i]) < 0)
-            _LAT(PIO_LED2) = HIGH;
+        result = ProcessByte(buf[i]);
+        if (result < 0)
+            return result; // Error
     }
+    return RESULT_SUCCESS;
 }
 
 int ProtocolFramer::ProcessByte(byte b) {
@@ -160,7 +169,7 @@ int ProtocolFramer::ProcessByte(byte b) {
                 // Buffer full (no delimiter received before buffer filled up)
                 if (rx_idx == MAX_PACKET_SIZE) {
                     rx_state = stWaitingForSOF;
-                    return RESULT_ERROR;
+                    return ERROR_PACKET_TOO_BIG;
                 }
 
             } else { // EOF received
@@ -168,7 +177,7 @@ int ProtocolFramer::ProcessByte(byte b) {
                 // Not enough bytes for a complete frame
                 if (rx_idx < MIN_PACKET_SIZE) {
                     rx_state = stWaitingForSOF;
-                    return RESULT_ERROR;
+                    return ERROR_PACKET_TOO_SMALL;
                 }
 
                 int result = ProcessFrame(rx_buffer, rx_idx);
@@ -191,19 +200,19 @@ int ProtocolFramer::ProcessFrame(byte* buf, uint len) {
     byte data[MAX_PACKET_SIZE];
     int numBytes = UnescapeData(buf, data, len, MAX_PACKET_SIZE);
     if (numBytes < 0)
-        return RESULT_ERROR; // Error escaping data
+        return ERROR_UNESCAPE_ERROR; // Error escaping data (numBytes contains error code)
 
     packet_header_t* header = (packet_header_t*)data;
 
     if (header->length + MIN_PACKET_SIZE > numBytes)
-        return RESULT_ERROR; // Not enough bytes in frame for the payload? Unlikely.
+        return ERROR_PAYLOAD_TOO_SMALL; // Not enough bytes in frame for the payload? Unlikely.
 
     // Check the CRC
     packet_footer_t* footer = (packet_footer_t*)(data + header->length);
     UINT16 crc = 0;
     //TODO: Calculate CRC
     if (crc != footer->crc)
-        return RESULT_ERROR;
+        return ERROR_INVALID_CRC;
 
     byte tx_payload[MAX_PACKET_SIZE];
     uint tx_size;
@@ -214,16 +223,17 @@ int ProtocolFramer::ProcessFrame(byte* buf, uint len) {
 
     // Prepare TX data
     if (result == RESULT_SUCCESS) {
-        PreparePacket(header->command, tx_payload, tx_size);
-    } else {
-        PreparePacket(header->command, NULL, 0);
+        if (!PreparePacket(header->command, tx_payload, tx_size))
+            return ERROR_FORMING_RESPONSE_PACKET;
     }
+
     return result;
 }
 
 bool ProtocolFramer::PreparePacket(byte command, byte* payload, uint len) {
     byte* buf;
     tx_idx = 0;
+    tx_size = 0;
     tx_buffer[tx_idx++] = HLDC_FRAME_DELIMITER;
 
     packet_header_t header;
@@ -256,6 +266,7 @@ bool ProtocolFramer::PreparePacket(byte command, byte* payload, uint len) {
     }
 
     tx_buffer[tx_idx++] = HLDC_FRAME_DELIMITER;
+    tx_size = tx_idx;
     return TRUE;
 }
 

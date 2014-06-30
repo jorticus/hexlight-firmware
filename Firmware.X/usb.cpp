@@ -63,6 +63,7 @@ ProtocolFramer cdcProtocolFramer;
 void USBUserProcess(void) {
     int numBytesRead;
     static int numBytesToWrite = 0;
+    static byte test = 0;
 
     if ((USBDeviceState < CONFIGURED_STATE) || (USBSuspendControl == 1)) {
         _LAT(PIO_LED_USB) = LOW;
@@ -76,16 +77,21 @@ void USBUserProcess(void) {
 
         int result = cdcProtocolFramer.ProcessData(rx_buffer, sizeof(rx_buffer));
 
-        // Clear TX buffer
-        for (int i=0; i<sizeof(tx_buffer); i++)
-            tx_buffer[i] = 0xFF;
-
-        if (cdcProtocolFramer.tx_idx > 0) {
-            numBytesToWrite = cdcProtocolFramer.tx_idx;
-            for (int i=0; i<numBytesToWrite; i++)
-                tx_buffer[i] = cdcProtocolFramer.tx_buffer[i];
+        if (result < 0) {
+            byte error_code = -result;
+            cdcProtocolFramer.PreparePacket(CMD_ERROR, &error_code, 1);
         }
 
+        // Clear TX buffer
+        for (int i=0; i<sizeof(tx_buffer); i++)
+           tx_buffer[i] = 0;
+
+        // Copy TX data
+        if (cdcProtocolFramer.tx_size > 0) {
+            for (int i=0; i<cdcProtocolFramer.tx_size; i++)
+                tx_buffer[i] = cdcProtocolFramer.tx_buffer[i];
+        }
+        
         USBInHandle = HIDTxPacket(HID_EP, (byte*)tx_buffer, sizeof(tx_buffer));
 
         //Re-arm the OUT endpoint for the next packet
@@ -99,10 +105,21 @@ void USBUserProcess(void) {
     if (numBytesRead != 0) {
         int result = cdcProtocolFramer.ProcessData(rx_buffer, numBytesRead);
 
-        if (cdcProtocolFramer.tx_idx > 0) {
-            numBytesToWrite = cdcProtocolFramer.tx_idx;
-            for (int i=0; i<numBytesToWrite; i++)
+        if (result < 0) {
+            byte error_code = -result;
+            cdcProtocolFramer.PreparePacket(CMD_ERROR, &error_code, 1);
+        }
+
+
+        // Clear TX buffer
+        for (int i=0; i<sizeof(tx_buffer); i++)
+           tx_buffer[i] = 0;
+
+        // Copy TX data
+        if (cdcProtocolFramer.tx_size > 0) {
+            for (int i=0; i<cdcProtocolFramer.tx_size; i++)
                 tx_buffer[i] = cdcProtocolFramer.tx_buffer[i];
+            numBytesToWrite = cdcProtocolFramer.tx_size;
         }
     }
 
