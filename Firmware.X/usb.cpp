@@ -12,7 +12,7 @@ extern "C" {
     #include "test_audio.h"
 }
 #include "usb.h"
-
+#include "adc.h"
 #include "colourengine.h"
 #include "comms.h"
 
@@ -30,7 +30,7 @@ int transferUnderProgress  =0;
 unsigned long FrameCounter =0;
 unsigned char FrameData[16];
 
-bool enableUsbAudio = false;
+bool enableUsbAudio = true;
 
 #endif
 
@@ -132,23 +132,42 @@ void USBUserProcess(void) {
 
 #endif
 #ifdef USB_USE_AUDIO_CLASS
+    static uint frameCounter = 0;
+    static bool processingAudio = false;
+    bool hasAudio = false;
+    static byte buf[NO_OF_BYTES_TRANSFRED_IN_A_USB_FRAME];
 
-    if (enableUsbAudio) {
-        unsigned char sampleCounter;
-        if(!USBHandleBusy(USBAudioTxHandle)) {
-            for(sampleCounter =0; sampleCounter < NO_OF_BYTES_TRANSFRED_IN_A_USB_FRAME; sampleCounter=sampleCounter+2) {
-                FrameData[sampleCounter] =   audioSamples[FrameCounter+sampleCounter];
-                FrameData[sampleCounter+1] = audioSamples[FrameCounter+sampleCounter+1];
+    // The USB pipe will limit data throughput to the configured sample rate (see usb_descriptors.c)
+    if(!USBHandleBusy(USBAudioTxHandle)) {
+        if (enableUsbAudio) {
+            if (flag_ready || transferUnderProgress) {
+                flag_ready = false;
+                flag_processing = true;
+                transferUnderProgress = true;
+
+                byte* src_buf = (byte*)read_buf;
+                for (int i=0; i<NO_OF_BYTES_TRANSFRED_IN_A_USB_FRAME; i++) {
+                    buf[i] = src_buf[i+frameCounter];
+                }
+
+                frameCounter += NO_OF_BYTES_TRANSFRED_IN_A_USB_FRAME;
+                hasAudio = true;
+
+                if (frameCounter >= (AUDIO_BUFFER_SIZE*sizeof(UINT16))) {
+                    frameCounter = 0;
+                    transferUnderProgress = false;
+                    flag_processing = false;
+                }
             }
-            FrameCounter += NO_OF_BYTES_TRANSFRED_IN_A_USB_FRAME;
-            if (FrameCounter >= sizeof(audioSamples)/sizeof(UINT)) {
-                FrameCounter = 0;
-                transferUnderProgress = 0;
-            }
-            USBAudioTxHandle = USBTxOnePacket(AS_EP , FrameData,NO_OF_BYTES_TRANSFRED_IN_A_USB_FRAME);
         }
+
+        if (!hasAudio) {
+            for (int i=0; i<NO_OF_BYTES_TRANSFRED_IN_A_USB_FRAME; i++)
+                buf[i] = 0;
+        }
+        USBAudioTxHandle = USBTxOnePacket(AS_EP, buf, NO_OF_BYTES_TRANSFRED_IN_A_USB_FRAME);
     }
-     
+
 #endif
 }
 
