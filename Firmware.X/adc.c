@@ -25,8 +25,8 @@
 // implementation if the FFT requires a very large buffer? ie. the circular buffer is updated
 // in chunks.
 
-#define OVERSAMPLING 2
-#define SAMPLE_RATE (8000*OVERSAMPLING) // Hz
+#define OVERSAMPLING 1
+#define SAMPLE_RATE (44100*OVERSAMPLING) // Hz
 
 #if OVERSAMPLING > 16
     #error Oversampling is limited to between 1-16 times
@@ -39,7 +39,7 @@
 volatile UINT16 snd_buf1[BUFFER_SIZE];
 volatile UINT16 snd_buf2[BUFFER_SIZE];
 
-volatile UINT16* write_buf = snd_buf1;      // Buffer used for capturing audio samples
+volatile UINT16* write_buf = snd_buf2;      // Buffer used for capturing audio samples
 volatile UINT16* read_buf = snd_buf1;       // Buffer used for processing audio samples
 
 volatile bool flag_ready = false;         // read_buf is ready to be processed (clear it when done)
@@ -51,7 +51,7 @@ static volatile uint write_idx = 0;
 ///// Macros /////
 
 //#define ADC_SAMPLES_PER_INT_x (OVERSAMPLING << _AD1CON2_SMPI_POSITION)
-#define ADC_SAMPLES_PER_INT_x ADC_SAMPLES_PER_INT_2
+#define ADC_SAMPLES_PER_INT_x ADC_SAMPLES_PER_INT_1
 
 ///// Code /////
 
@@ -78,9 +78,9 @@ void ADCInitialize() {
     // 1 sample per ADC interrupt -> required for DMA
     // Using only MuxA (no alt MuxB), with a 16-bit buffer, using 16-bit fractional format.
     // Clock should be derived from peripheral clock, and sampling should start on timer match
-    AD1CON1 = ADC_MODULE_OFF | ADC_IDLE_CONTINUE | ADC_FORMAT_SIGN_INT16 | ADC_CLK_TMR | ADC_AUTO_SAMPLING_ON;
+    AD1CON1 = ADC_MODULE_OFF | ADC_IDLE_CONTINUE | ADC_FORMAT_INTG16 | ADC_CLK_TMR | ADC_AUTO_SAMPLING_ON;
     AD1CON2 = ADC_VREF_AVDD_AVSS | ADC_OFFSET_CAL_DISABLE | ADC_SCAN_OFF | ADC_SAMPLES_PER_INT_x | ADC_BUF_16 | ADC_ALT_INPUT_OFF;
-    AD1CON3 = ADC_CONV_CLK_PB | ADC_SAMPLE_TIME_12;
+    AD1CON3 = ADC_CONV_CLK_PB | ADC_SAMPLE_TIME_31 | ADC_CONV_CLK_Tcy;
 
     // TODO: Determine what type of result format to use (integer/fractional/etc.)
 
@@ -197,12 +197,17 @@ void __ISR(_ADC_VECTOR, IPL6) adc_isr(void) {
         sample /= OVERSAMPLING;
         write_buf[write_idx] = (UINT16)sample;
     #else
-        write_buf[write_idx] = (UINT16)ADC1BUF0;
+//        write_buf[write_idx] = (UINT16)ADC1BUF0;
     #endif
+
+    write_buf[write_idx++] = (UINT16)ADC1BUF0;
+    //write_buf[write_idx++] = (UINT16)ADC1BUF1;
+    //write_buf[write_idx++] = (UINT16)ADC1BUF2;
+    //write_buf[write_idx++] = (UINT16)ADC1BUF3;
 
 
     // Update the buffer
-    if (write_idx++ == BUFFER_SIZE) {
+    if (write_idx == BUFFER_SIZE) {
         write_idx = 0;
         swap_buffers();
     }
