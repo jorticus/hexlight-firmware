@@ -111,19 +111,38 @@
 //#define USB_ENABLE_TRANSFER_COMPLETE_HANDLER
 
 /** DEVICE CLASS USAGE *********************************************/
+
+// IMPORTANT NOTE: After changing the USB configuration,
+//  make sure you uninstall the existing device from the device manager
+//  or the changes may not appear. Make sure you're uninstalling the 'Composite Device'
+
 //#define USB_USE_CDC
 #define USB_USE_HID
+#define USB_USE_AUDIO_CLASS
+
+#if defined(USB_USE_CDC) && defined(USB_USE_HID)
+    #error CDC and HID communication cannot be enabled at the same time
+#endif
 
 /** ENDPOINTS ALLOCATION *******************************************/
 #define USB_MAX_EP_NUMBER	    3
 
+// Interface indices. Must match the config descriptor
+#define CDC_INTF1_ID            0x00
+#define CDC_INTF2_ID            0x03
+#define HID_INTF_ID             0x00
+#define AUDIO_CONTROL_INTERFACE_ID 0x02
+#define AUDIO_STREAMING_INTERFACE_ID 0x01
+
+
 /* CDC */
-#define CDC_COMM_INTF_ID        0x0
-#define CDC_COMM_EP              2
+#define CDC_COMM_INTF_ID        0x00
+
+#define CDC_COMM_EP              1
 #define CDC_COMM_IN_EP_SIZE      8
 
 #define CDC_DATA_INTF_ID        0x01
-#define CDC_DATA_EP             3
+#define CDC_DATA_EP             2
 #define CDC_DATA_OUT_EP_SIZE    64
 #define CDC_DATA_IN_EP_SIZE     64
 
@@ -132,13 +151,26 @@
 
 
 /* HID */
-#define HID_INTF_ID             0x00
+
 #define HID_EP 					1
 #define HID_INT_OUT_EP_SIZE     3
 #define HID_INT_IN_EP_SIZE      3
 #define HID_NUM_OF_DSC          1
 #define HID_RPT01_SIZE          28
 
+
+/* Audio */ 
+#define ID_INPUT_TERMINAL  0x01
+#define ID_OUTPUT_TERMINAL 0x02
+#define ID_MIXER_UNIT      0x03
+#define ID_SELECTOR_UNIT   0x04
+#define ID_FEATURE_UNIT    0x05
+#define ID_PROCESSING_UNIT 0x06
+#define ID_EXTENSION_UNIT  0x07
+
+#define AS_EP             3
+
+#define NO_OF_BYTES_TRANSFRED_IN_A_USB_FRAME 16
 
 /** DEFINITIONS ****************************************************/
 

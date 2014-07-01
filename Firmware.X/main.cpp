@@ -99,7 +99,7 @@ int main(void) {
     PWMInitialize();
     USBDeviceInit();
 
-    //ADCStartCapture();
+    ADCStartCapture();
 
     ColourEngine::Initialize();
     ColourEngine::PowerOn(1000);

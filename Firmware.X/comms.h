@@ -34,6 +34,15 @@ typedef struct __attribute__((packed)) {
 #define HLDC_ESCAPE 0x7D
 #define HLDC_ESCAPE_MASK 0x20
 
+#define ERROR_UNKNOWN -1
+#define ERROR_PACKET_TOO_BIG -2
+#define ERROR_PACKET_TOO_SMALL -3
+#define ERROR_PAYLOAD_TOO_SMALL -4
+#define ERROR_UNESCAPE_ERROR -5
+#define ERROR_INVALID_CRC -6
+#define ERROR_FORMING_RESPONSE_PACKET -7
+#define ERROR_INVALID_COMMAND -8
+#define ERROR_INVALID_PAYLOAD -9
 
 class ProtocolFramer {
 public:
@@ -42,16 +51,15 @@ public:
         {};
 
 
-    bool ProcessData(byte* buf, int len);
-
+    int ProcessData(byte* buf, int len);
+    bool PreparePacket(byte command, byte* payload, uint len);
     
     byte tx_buffer[MAX_PACKET_SIZE];
-    uint tx_idx;
+    byte tx_size;
 
 private:
     int ProcessByte(byte b);
     int ProcessFrame(byte* data, uint len);
-    bool PreparePacket(byte command, byte* payload, uint len);
     bool TxWrite(byte b);
 
     typedef enum { stWaitingForSOF, stWaitingForHeader, stReadingFrame } state_t;
@@ -59,6 +67,7 @@ private:
     byte rx_buffer[MAX_PACKET_SIZE];
     
     uint rx_idx;
+    uint tx_idx;
     
 
     state_t rx_state;
@@ -115,7 +124,9 @@ typedef enum { MODE_HOST_CONTROL, MODE_TRIG, MODE_CYCLE, MODE_AUDIO } pl_mode;
 #define CMD_SET_XYZ_CAL 0x20
 #define CMD_GET_XYZ_CAL 0x21
 
-#define CMD_ACK 0xFF
+#define CMD_ENABLE_USBAUDIO 0x30
+
+#define CMD_ERROR 0xFF
 
 
 #endif	/* COMMS_H */

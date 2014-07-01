@@ -21,9 +21,9 @@ void ADCStartCapture();
 // Stop capturing audio
 void ADCStopCapture();
 
+#define AUDIO_BUFFER_SIZE 1024
 
-
-extern volatile byte* read_buf;
+extern volatile UINT16* read_buf;
 
 extern volatile bool flag_ready;         // read_buf is ready to be processed (clear it when done)
 extern volatile bool flag_processing;    // read_buf is currently being processed (set this yourself and clear when done)

@@ -99,6 +99,7 @@
 #include "./USB/usb.h"
 #include "./USB/usb_function_hid.h"
 
+#ifdef USB_USE_HID
 
 /** VARIABLES ******************************************************/
 #if defined(COMPILER_MPLAB_C18)
@@ -250,6 +251,8 @@ void USBCheckHIDRequest(void)
 }//end USBCheckHIDRequest
 
 /** USER API *******************************************************/
+
+#endif
 
 #endif
 /** EOF usb_function_hid.c ******************************************************/

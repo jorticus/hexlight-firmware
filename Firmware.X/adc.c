@@ -19,28 +19,24 @@
 #define DMA_CHANNEL DMA_CHANNEL0
 #define DMA_VECTOR _DMA0_VECTOR
 
-#define BUFFER_SIZE 64  // Maximum is 65536
+#define BUFFER_SIZE AUDIO_BUFFER_SIZE  // Maximum is 65536
 //TODO: How big should this buffer be for the FFT?
 // Would it make sense to do some sort of hybrid double-buffer + circular buffer
 // implementation if the FFT requires a very large buffer? ie. the circular buffer is updated
 // in chunks.
 
 #define OVERSAMPLING 8
-#define SAMPLE_RATE (44100*OVERSAMPLING) // Hz
-
-#if OVERSAMPLING > 16
-    #error Oversampling is limited to between 1-16 times
-#endif
+#define SAMPLE_RATE (22050*OVERSAMPLING) // Hz
 
 
 ///// Internal Variables //////
 
 // Use double buffering
-static volatile byte snd_buf1[BUFFER_SIZE];
-static volatile byte snd_buf2[BUFFER_SIZE];
+volatile UINT16 snd_buf1[BUFFER_SIZE];
+volatile UINT16 snd_buf2[BUFFER_SIZE];
 
-static volatile byte* write_buf = snd_buf1;      // Buffer used for capturing audio samples
-volatile byte* read_buf = snd_buf2;       // Buffer used for processing audio samples
+volatile UINT16* write_buf = snd_buf2;      // Buffer used for capturing audio samples
+volatile UINT16* read_buf = snd_buf1;       // Buffer used for processing audio samples
 
 volatile bool flag_ready = false;         // read_buf is ready to be processed (clear it when done)
 volatile bool flag_processing = false;    // read_buf is currently being processed
@@ -50,7 +46,8 @@ static volatile uint write_idx = 0;
 
 ///// Macros /////
 
-#define ADC_SAMPLES_PER_INT_x (OVERSAMPLING << _AD1CON2_SMPI_POSITION)
+//#define ADC_SAMPLES_PER_INT_x ((OVERSAMPLING-1) << _AD1CON2_SMPI_POSITION)
+#define ADC_SAMPLES_PER_INT_x ADC_SAMPLES_PER_INT_8
 
 ///// Code /////
 
@@ -77,9 +74,9 @@ void ADCInitialize() {
     // 1 sample per ADC interrupt -> required for DMA
     // Using only MuxA (no alt MuxB), with a 16-bit buffer, using 16-bit fractional format.
     // Clock should be derived from peripheral clock, and sampling should start on timer match
-    AD1CON1 = ADC_MODULE_OFF | ADC_IDLE_CONTINUE | ADC_FORMAT_FRACT16 | ADC_CLK_TMR | ADC_AUTO_SAMPLING_ON;
+    AD1CON1 = ADC_MODULE_OFF | ADC_IDLE_CONTINUE | ADC_FORMAT_INTG16 | ADC_CLK_TMR | ADC_AUTO_SAMPLING_ON;
     AD1CON2 = ADC_VREF_AVDD_AVSS | ADC_OFFSET_CAL_DISABLE | ADC_SCAN_OFF | ADC_SAMPLES_PER_INT_x | ADC_BUF_16 | ADC_ALT_INPUT_OFF;
-    AD1CON3 = ADC_CONV_CLK_PB | ADC_SAMPLE_TIME_12;
+    AD1CON3 = ADC_CONV_CLK_PB | ADC_SAMPLE_TIME_31 | ADC_CONV_CLK_Tcy;
 
     // TODO: Determine what type of result format to use (integer/fractional/etc.)
 
@@ -158,10 +155,12 @@ static void swap_buffers() {
     else if (flag_processing) {
         _LAT(PIO_LED2) = HIGH;
         return; // Throw away the new buffer's data and capture again
+    } else {
+        _LAT(PIO_LED2) = LOW;
     }
 
     // Swap the read and write buffers
-    volatile byte* tmp = read_buf;
+    volatile UINT16* tmp = read_buf;
     read_buf = write_buf;
     write_buf = tmp;
 
@@ -181,28 +180,21 @@ static void swap_buffers() {
 
 void __ISR(_ADC_VECTOR, IPL6) adc_isr(void) {
     // Called when the ADC has finished sampling N samples
-    _LAT(PIO_LED2) = 1;
+    _LAT(PIO_LED3) = 1;
 
-    // Average N samples into one and add to the buffer
-    #if OVERSAMPLING > 1
-        uint i;
-        uint sample = 0;
-        uint* buf = (uint*)&ADC1BUF0;
-        for (i=0; i<OVERSAMPLING; i++) {
-            sample += buf[i];
-        }
-        sample /= OVERSAMPLING;
-        write_buf[write_idx] = sample;
-    #else
-        write_buf[write_idx] = ADC1BUF0;
-    #endif
+    //write_buf[write_idx++] = (UINT16)ADC1BUF0;
+
+    // Super-sampling
+    uint avg = (UINT16)ADC1BUF0 + (UINT16)ADC1BUF1 + (UINT16)ADC1BUF2 + (UINT16)ADC1BUF3 +
+               (UINT16)ADC1BUF4 + (UINT16)ADC1BUF5 + (UINT16)ADC1BUF6 + (UINT16)ADC1BUF7;
+    write_buf[write_idx++] = (UINT16)(avg / 8);
 
     // Update the buffer
-    if (write_idx++ == BUFFER_SIZE) {
+    if (write_idx == BUFFER_SIZE) {
         write_idx = 0;
         swap_buffers();
     }
 
-    _LAT(PIO_LED2) = 0;
+    _LAT(PIO_LED3) = 0;
     INTClearFlag(INT_AD1);
 }
