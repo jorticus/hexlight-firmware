@@ -39,22 +39,22 @@ byte rx_buffer[64];
 byte tx_buffer[64];
 
 
-typedef struct {
-    uint header;
-    float r;
-    float g;
-    float b;
-    float w;
-    float l;
-} hexrgb_packet_t;
-
-typedef struct {
-    uint header;
-    float x;
-    float y;
-    float z;
-    float b;
-} hexrgb_packet_xyz_t;
+//typedef struct {
+//    uint header;
+//    float r;
+//    float g;
+//    float b;
+//    float w;
+//    float l;
+//} hexrgb_packet_t;
+//
+//typedef struct {
+//    uint header;
+//    float x;
+//    float y;
+//    float z;
+//    float b;
+//} hexrgb_packet_xyz_t;
 
 
 ProtocolFramer cdcProtocolFramer;
@@ -66,10 +66,10 @@ void USBUserProcess(void) {
     static byte test = 0;
 
     if ((USBDeviceState < CONFIGURED_STATE) || (USBSuspendControl == 1)) {
-        _LAT(PIO_LED_USB) = LOW;
+        //_LAT(PIO_LED_USB) = LOW;
         return;
     }
-    _LAT(PIO_LED_USB) = HIGH;
+    //_LAT(PIO_LED_USB) = HIGH;
 
 #ifdef USB_USE_HID
 

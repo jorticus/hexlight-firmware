@@ -21,7 +21,7 @@ void ADCStartCapture();
 // Stop capturing audio
 void ADCStopCapture();
 
-#define AUDIO_BUFFER_SIZE 1024
+#define AUDIO_BUFFER_SIZE 128
 
 extern volatile UINT16* read_buf;
 

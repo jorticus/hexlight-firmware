@@ -8,14 +8,13 @@
 #ifndef HARDWARE_H
 #define	HARDWARE_H
 
-#if defined(__32MX220F032B__)
+#if defined(BOARD_HEXLIGHT)
     #include "hardwareHexRGB.h"
     #define BOARD_HEXRGB
-#elif defined(__32MX460F512L__)
+#elif defined(BOARD_UBW32)
     #include "hardwareUBW32.h"
-    #define BOARD_UBW32
 #else
-    #error Unsupported part
+    #error Unsupported board
 #endif
 
 #endif	/* HARDWARE_H */

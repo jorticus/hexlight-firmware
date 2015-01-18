@@ -20,12 +20,12 @@ typedef INT16 fractional;
    ((X < 0.0) ? (INT16)(32768*(X) - 0.5) : (INT16)(32767*(X) + 0.5))
 
 
-extern fractional Float2Fract (         /* Converts float into fractional */
-   float aVal                           /* float value in range [-1, 1) */
-);
-extern float Fract2Float (        /* Converts fractional into float */
-   fractional aVal         /* fract value in range {-1, 1-2^-15} */
-);
+//extern fractional Float2Fract (         /* Converts float into fractional */
+//   float aVal                           /* float value in range [-1, 1) */
+//);
+//extern float Fract2Float (        /* Converts fractional into float */
+//   fractional aVal         /* fract value in range {-1, 1-2^-15} */
+//);
 
 #ifdef	__cplusplus
 }

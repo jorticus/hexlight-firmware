@@ -12,7 +12,7 @@ extern bool enableUsbAudio;
 int ProcessCommand(byte command, byte* payload_data, byte payload_len, byte* reply_data, uint* reply_len) {
     // NOTE: reply_data is assumed to contain at least MAX_PAYLOAD_SIZE bytes
     *reply_len = 0;
-    toggle(PIO_LED3);
+    //toggle(PIO_LED3);
 
     switch (command) {
         case CMD_TEST:

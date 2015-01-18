@@ -11,26 +11,26 @@
 // Represents RGB(W) colour which can be used to update the PWM channels
 class RGBColour {
 public:
-    RGBColour(float red=0, float green=0, float blue=0) :
+    RGBColour(uint red=0, uint green=0, uint blue=0) :
         red(red), green(green), blue(blue)   {};
 
-    float red, green, blue;
+    uint red, green, blue;
 };
 
 class XYYColour {
 public:
-    XYYColour(float x=0, float y=0, float Y=0) :
+    XYYColour(uint x=0, uint y=0, uint Y=0) :
         x(x), y(y), Y(Y) {};
 
-    float x, y, Y;
+    uint x, y, Y;
 };
 
 class XYZColour {
 public:
-    XYZColour(float x=0, float y=0, float z=0) :
+    XYZColour(uint x=0, uint y=0, uint z=0) :
         x(x), y(y), z(z) {};
 
-    float x, y, z;
+    uint x, y, z;
 };
 
 #endif	/* COLOURSPACES_H */

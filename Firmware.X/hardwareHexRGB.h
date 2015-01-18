@@ -30,26 +30,28 @@
 extern unsigned int sys_clock;
 extern unsigned int pb_clock;
 
-#define PIO_LED_STATUS ??
+#define PIO_LED1 R(B,7)
+#define PIO_LED2 R(B,8)
+#define PIO_LED_STATUS PIO_LED1
 
-#define PIO_BTN_PRG ??
-#define PIO_BTN1 ??
-#define PIO_BTN2 ??
+#define PIO_BTN1 R(A,4)
+#define PIO_BTN2 R(B,5)
+#define PIO_BTN_PGM BTN1
 
-#define PIO_TRIG ??
+#define PIO_TRIG R(B,9)
 
 #define HIGH 1
 #define LOW 0
 
 
 // Remappable I/O
-#define PIO_OC1 R(B,3)
+#define PIO_OC1 R(B,0)
 #define PIO_OC2 R(B,1)
-#define PIO_OC3 R(B,0)
-#define PIO_OC4 R(B,2)
+#define PIO_OC3 R(B,2)
+#define PIO_OC4 R(B,3)
 
-#define PIO_USBP ??
-#define PIO_USBN ??
+#define PIO_USBP R(B,10)
+#define PIO_USBN R(B,11)
 
 #define self_power 1
 #define USB_BUS_SENSE 1

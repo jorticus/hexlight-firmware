@@ -68,6 +68,8 @@ void ADCInitialize() {
     // E3 - Select the ADC clock prescaler ADCS
     // F - turn the ADC module on
 
+#if defined(BOARD_UBW32)
+
     TRISBbits.TRISB8 = INPUT;
     AD1PCFGbits.PCFG8 = ANALOG;
 
@@ -110,6 +112,7 @@ void ADCInitialize() {
         snd_buf1[i] = 0;
         snd_buf2[i] = 0;
     }
+#endif
 }
 
 void ADCStartCapture() {
@@ -180,7 +183,7 @@ static void swap_buffers() {
 
 void __ISR(_ADC_VECTOR, IPL6) adc_isr(void) {
     // Called when the ADC has finished sampling N samples
-    _LAT(PIO_LED3) = 1;
+    //_LAT(PIO_LED3) = 1;
 
     //write_buf[write_idx++] = (UINT16)ADC1BUF0;
 
@@ -195,6 +198,6 @@ void __ISR(_ADC_VECTOR, IPL6) adc_isr(void) {
         swap_buffers();
     }
 
-    _LAT(PIO_LED3) = 0;
+    //_LAT(PIO_LED3) = 0;
     INTClearFlag(INT_AD1);
 }

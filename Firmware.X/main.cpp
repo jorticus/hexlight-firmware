@@ -12,6 +12,9 @@
  *   PIC32MX460F512L (UBW32 dev board)
  */
 
+#define BUILD_NO_BOOTLOADER
+
+
 #include <p32xxxx.h>
 #include <plib.h>
 #include <peripheral/timer.h>
@@ -29,6 +32,36 @@ extern "C" {
 #include "colourengine.h"
 
 
+#ifdef BUILD_NO_BOOTLOADER
+#pragma config UPLLEN   = ON        // USB PLL Enabled
+#pragma config UPLLIDIV = DIV_4     // USB PLL Input Divider = Divide by 1
+#pragma config FUSBIDIO = OFF
+#pragma config FVBUSONIO = OFF
+
+#pragma config JTAGEN   = OFF
+#pragma config DEBUG    = OFF           // Background Debugger disabled
+#pragma config FPLLMUL  = MUL_20         // PLL Multiplier: Multiply by 20
+#pragma config FPLLIDIV = DIV_4         // PLL Input Divider:  Divide by 4
+#pragma config FPLLODIV = DIV_2         // PLL Output Divider: Divide by 2
+
+#pragma config OSCIOFNC = OFF           // CLKO Output Signal Active on the OSCO Pin (Disabled)
+#pragma config FSOSCEN = OFF            // Secondary Oscillator Enable (Disabled)
+
+#pragma config FWDTEN = OFF             // WD timer: OFF
+#pragma config POSCMOD = HS             // Primary Oscillator Mode: High Speed xtal
+#pragma config FNOSC = PRIPLL           // Oscillator Selection: Primary oscillator  w/ PLL
+//#pragma config FNOSC = FRC
+#pragma config FPBDIV = DIV_1           // Peripheral Bus Clock: Divide by 1
+#pragma config BWP = OFF                // Boot write protect: OFF
+
+
+#pragma config IESO = ON
+#pragma config FCKSM = CSECME
+
+#pragma config ICESEL = ICS_PGx2    // ICE pins configured on PGx1 (PGx2 is multiplexed with USB D+ and D- pins).
+#endif
+
+
 #define TICK_FREQUENCY 1000
 
 unsigned int sys_clock = F_OSC;
@@ -44,6 +77,7 @@ void SystickInit() {
 
 void InitializeSystem() {
 
+#ifdef BOARD_UBW32
     // Disable ADC port (allows PORTB to be used for digital I/O)
     AD1PCFG = 0xFFFF;
 
@@ -55,6 +89,7 @@ void InitializeSystem() {
     LATB = 0x0000;
     LATC = 0x0000;
     LATD = 0x0000;
+#endif
 
     // Force disconnect of USB bootloader
     U1CON = 0x00000000;
@@ -63,18 +98,22 @@ void InitializeSystem() {
     // LEDs
     _TRIS(PIO_LED1) = OUTPUT;
     _TRIS(PIO_LED2) = OUTPUT;
+#ifdef BOARD_UBW32
     _TRIS(PIO_LED3) = OUTPUT;
     _TRIS(PIO_LED_USB) = OUTPUT;
     _TRIS(PIO_BTN_PGM) = 1;
     _TRIS(PIO_BTN_USR) = 1;
+#endif
 
     _TRIS(PIO_USBP) = INPUT;
     _TRIS(PIO_USBN) = INPUT;
 
     _LAT(PIO_LED1) = LOW;
     _LAT(PIO_LED2) = LOW;
+#ifdef BOARD_UBW32
     _LAT(PIO_LED3) = HIGH;
     _LAT(PIO_LED_USB) = LOW;
+#endif
 
     mJTAGPortEnable(0);
 
@@ -94,17 +133,19 @@ void InitializeSystem() {
 
 
 int main(void) {
+
     InitializeSystem();
-    ADCInitialize();
+    //ADCInitialize();
     PWMInitialize();
     USBDeviceInit();
 
-    ADCStartCapture();
+    //ADCStartCapture();
+    _LAT(PIO_LED1) = HIGH;
 
     ColourEngine::Initialize();
     ColourEngine::PowerOn(1000);
 
-    _LAT(PIO_LED3) = LOW;
+    //_LAT(PIO_LED1) = LOW;
 
     {
         RGBColour colour(1.0, 1.0, 1.0);
@@ -115,7 +156,7 @@ int main(void) {
 
     }
 
-    //_LAT(PIO_LED1) = HIGH;
+    _LAT(PIO_LED2) = HIGH;
 
     while (1) {
         USBDeviceTasks();
@@ -124,7 +165,7 @@ int main(void) {
 
 
         // Convenience - pressing PGM also resets the device
-        if (_PORT(PIO_BTN_PGM) == HIGH) {
+        if (_PORT(PIO_BTN1) == HIGH) {
             SoftReset();
         }
     }

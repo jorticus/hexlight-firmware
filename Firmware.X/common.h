@@ -20,6 +20,7 @@ typedef unsigned char bool;
 #define true 1
 #define false 0
 
+#define _XKEYCHECK
 #include <GenericTypeDefs.h>
 #include "dsp.h"
 
