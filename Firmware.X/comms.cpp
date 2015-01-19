@@ -48,22 +48,22 @@ int ProcessCommand(byte command, byte* payload_data, byte payload_len, byte* rep
             break;
 
         // Update the outputs using device-independant colour
-        case CMD_SET_XYY:
-            if (payload_len == sizeof(XYYColour)) {
-                XYYColour* payload = (XYYColour*)payload_data;
-                ColourEngine::SetXYY(*payload);
-                return RESULT_SUCCESS;
-            } else return ERROR_INVALID_PAYLOAD;
-            break;
-
-        // Update the outputs using device-independant colour
-        case CMD_SET_XYZ:
-            if (payload_len == sizeof(XYZColour)) {
-                XYZColour* payload = (XYZColour*)payload_data;
-                ColourEngine::SetXYZ(*payload);
-                return RESULT_SUCCESS;
-            } else return ERROR_INVALID_PAYLOAD;
-            break;
+//        case CMD_SET_XYY:
+//            if (payload_len == sizeof(XYYColour)) {
+//                XYYColour* payload = (XYYColour*)payload_data;
+//                ColourEngine::SetXYY(*payload);
+//                return RESULT_SUCCESS;
+//            } else return ERROR_INVALID_PAYLOAD;
+//            break;
+//
+//        // Update the outputs using device-independant colour
+//        case CMD_SET_XYZ:
+//            if (payload_len == sizeof(XYZColour)) {
+//                XYZColour* payload = (XYZColour*)payload_data;
+//                ColourEngine::SetXYZ(*payload);
+//                return RESULT_SUCCESS;
+//            } else return ERROR_INVALID_PAYLOAD;
+//            break;
 
         /*case CMD_GET_XYY:
             XYYColour* payload = (XYYColour*)reply_data;

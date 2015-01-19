@@ -8,30 +8,53 @@
 #ifndef COLOURSPACES_H
 #define	COLOURSPACES_H
 
-// Represents RGB(W) colour which can be used to update the PWM channels
-class RGBColour {
-public:
-    RGBColour(uint red=0, uint green=0, uint blue=0) :
-        red(red), green(green), blue(blue)   {};
-
-    uint red, green, blue;
+class Colour {
+    // Abstract base class
 };
 
-class XYYColour {
+// Represents RGB(W) colour (raw or perceptually-linear)
+class RGBWColour : Colour {
 public:
-    XYYColour(uint x=0, uint y=0, uint Y=0) :
-        x(x), y(y), Y(Y) {};
+    typedef enum { rawRGB, sRGB } space_t;
+    
+    RGBWColour(q15 red=0, q15 green=0, q15 blue=0, q15 white=0, space_t space=sRGB) :
+        red(red), green(green), blue(blue), white(white), space(space) { }
 
-    uint x, y, Y;
+    //operator* ();
+
+//    const RGBWColour to_srgb();
+    const RGBWColour to_linear();
+
+    q15 red, green, blue, white;
+    space_t space;
 };
 
-class XYZColour {
-public:
-    XYZColour(uint x=0, uint y=0, uint z=0) :
-        x(x), y(y), z(z) {};
+// Represents a RGB(W) colour that shall be perceptually corrected, where 0.5 = half brightness.
+//class SRGBWColour : Colour {
+//    SRGBWColour(q15 red=0, q15 green=0, q15 blue=0, q15 white=0) :
+//        red(red), green(green), blue(blue), white(white) { }
+//
+//    // Convert to linear RGBW
+//    const RGBWColour& to_linear();
+//
+//    q15 red, green, blue, white;
+//};
 
-    uint x, y, z;
-};
+//class XYYColour {
+//public:
+//    XYYColour(q15 x=0, q15 y=0, q15 Y=0) :
+//        x(x), y(y), Y(Y) { }
+//
+//    q15 x, y, Y;
+//};
+//
+//class XYZColour {
+//public:
+//    XYZColour(q15 x=0, q15 y=0, q15 z=0) :
+//        x(x), y(y), z(z) { }
+//
+//    q15 x, y, z;
+//};
 
 #endif	/* COLOURSPACES_H */
 

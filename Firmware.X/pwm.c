@@ -9,6 +9,8 @@
 #include <p32xxxx.h>
 #include <peripheral/timer.h>
 #include <peripheral/outcompare.h>
+#include <peripheral/lock.h>
+#include <peripheral/pps.h>
 #include <dsplib_dsp.h>
 #include <mchp_dsp_wrapper.h>
 #include "common.h"
@@ -44,6 +46,16 @@ void PWMInitialize() {
     _TRIS(PIO_OC3) = OUTPUT;
     _TRIS(PIO_OC4) = OUTPUT;
 
+    // Set up Peripheral Pin Select
+#ifdef BOARD_HEXLIGHT
+    //__builtin_write_OSCCONL(OSCCON & 0xbf)
+    RPB0R = 0b0101; // OC3
+    RPB1R = 0b0101; // OC2
+    RPB2R = 0b0101; // OC4
+    RPB3R = 0b0101; // OC1
+    ///__builtin_write_OSCCONL(OSCCON | 0x40)
+#endif
+
     // Initialize the timebase (frequency = pb_clock/postscaler/PR2)
     OpenTimer2(T2_OFF | T2_PS_1_1 | T2_SOURCE_INT, PWM_PR);
 
@@ -53,11 +65,11 @@ void PWMInitialize() {
     OpenOC3(OCxCON, 0, 0);
     OpenOC4(OCxCON, 0, 0);
 
-    PWMSetChannel(PWM1, Q15(0.1));
+    PWMSetChannel(PWM1, Q15(0));
 
-    PWMSetChannel(PWM2, Q15(0.1));
-    PWMSetChannel(PWM3, Q15(0.1));
-    PWMSetChannel(PWM4, Q15(0.1));
+    PWMSetChannel(PWM2, Q15(0));
+    PWMSetChannel(PWM3, Q15(0));
+    PWMSetChannel(PWM4, Q15(0));
 }
 
 void PWMEnable() {

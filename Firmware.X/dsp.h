@@ -8,17 +8,20 @@
 #ifndef DSP_H
 #define	DSP_H
 
-#ifdef	__cplusplus
-extern "C" {
-#endif
+#include <stdint.h>
+#include <math.h>                /* fabs, sin, cos, atan, sqrt */
 
-#include        <math.h>                /* fabs, sin, cos, atan, sqrt */
-
-typedef INT16 fractional;
+typedef int16_t q15;
+typedef q15 fractional;
 
 #define Q15(X) \
    ((X < 0.0) ? (INT16)(32768*(X) - 0.5) : (INT16)(32767*(X) + 0.5))
 
+
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
 
 //extern fractional Float2Fract (         /* Converts float into fractional */
 //   float aVal                           /* float value in range [-1, 1) */

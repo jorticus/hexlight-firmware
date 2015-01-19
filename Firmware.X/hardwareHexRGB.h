@@ -18,6 +18,9 @@
 #define _TOGGLE_F(alpha,bit)    (LAT ## alpha ## INV = (1<<bit))
 #define R(alpha,bit) alpha,bit
 
+#define _RPOR(pin)           _RPOR_F(pin)
+#define _RPOR_F(alpha,bit)   (RP ## alpha ## bit ## R)
+
 #define INPUT 1
 #define OUTPUT 0
 
@@ -26,7 +29,8 @@
 
 ///// Configuration //////
 
-#define F_OSC 4000000L  // 8MHz oscillator / 2
+#define F_OSC       8000000L  // 8MHz oscillator
+#define F_SYSCLK    (F_OSC /4 *20 /2)
 extern unsigned int sys_clock;
 extern unsigned int pb_clock;
 

@@ -97,12 +97,12 @@ typedef struct {
     float Y;
 } pl_xyy_t;*/
 
-typedef struct {
-    byte ch;
-    //pl_xyy_t point;
-    XYYColour colour_point;
-} pl_xyz_cal_t;
-typedef enum { XYZ_CH1, XYZ_CH2, XYZ_CH3, XYZ_CH4, XYZ_WHITE } pl_xyz_cal_ch;
+//typedef struct {
+//    byte ch;
+//    //pl_xyy_t point;
+//    XYYColour colour_point;
+//} pl_xyz_cal_t;
+//typedef enum { XYZ_CH1, XYZ_CH2, XYZ_CH3, XYZ_CH4, XYZ_WHITE } pl_xyz_cal_ch;
 
 typedef enum { MODE_HOST_CONTROL, MODE_TRIG, MODE_CYCLE, MODE_AUDIO } pl_mode;
 

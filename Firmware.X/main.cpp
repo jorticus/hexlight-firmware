@@ -64,8 +64,8 @@ extern "C" {
 
 #define TICK_FREQUENCY 1000
 
-unsigned int sys_clock = F_OSC;
-unsigned int pb_clock = F_OSC;
+unsigned int sys_clock = F_SYSCLK;
+unsigned int pb_clock = F_SYSCLK;
 
 
 void SystickInit() {
@@ -90,6 +90,20 @@ void InitializeSystem() {
     LATC = 0x0000;
     LATD = 0x0000;
 #endif
+#ifdef BOARD_HEXLIGHT
+    ANSELA = 0x0000;
+    ANSELB = 0x0000;
+#endif
+
+    // Ensure LED drivers are driven low as soon as possible
+    _TRIS(PIO_OC1) = 0;
+    _TRIS(PIO_OC2) = 0;
+    _TRIS(PIO_OC3) = 0;
+    _TRIS(PIO_OC4) = 0;
+    _LAT(PIO_OC1) = OUTPUT;
+    _LAT(PIO_OC2) = OUTPUT;
+    _LAT(PIO_OC3) = OUTPUT;
+    _LAT(PIO_OC4) = OUTPUT;
 
     // Force disconnect of USB bootloader
     U1CON = 0x00000000;
@@ -118,8 +132,8 @@ void InitializeSystem() {
     mJTAGPortEnable(0);
 
     // Initializethe PIC32 core
-    OSCConfig(OSC_POSC_PLL, OSC_PLL_MULT_20, OSC_PLL_POST_1, OSC_FRC_POST_1);
-    sys_clock = F_OSC * 20 / 1; // Assumes the above configuration
+    //OSCConfig(OSC_POSC_PLL, OSC_PLL_MULT_20, OSC_PLL_POST_2, OSC_FRC_POST_2);
+    sys_clock = F_SYSCLK;
     mOSCSetPBDIV(OSC_PB_DIV_1);
     pb_clock = SYSTEMConfig(sys_clock, SYS_CFG_ALL);
 
@@ -135,34 +149,32 @@ void InitializeSystem() {
 int main(void) {
 
     InitializeSystem();
+
+    // Wait for reset button to be released
+    while (_PORT(PIO_BTN1) == HIGH) { }
+
     //ADCInitialize();
     PWMInitialize();
+    PWMEnable();
     USBDeviceInit();
 
     //ADCStartCapture();
     _LAT(PIO_LED1) = HIGH;
 
     ColourEngine::Initialize();
-    ColourEngine::PowerOn(1000);
-
-    //_LAT(PIO_LED1) = LOW;
-
     {
-        RGBColour colour(1.0, 1.0, 1.0);
-
-        //ColourEngine::SetBrightness(1.0f);
-        ColourEngine::SetRGB(colour);
-        
+        RGBWColour colour(Q15(1.0), Q15(1.0), Q15(1.0), Q15(1.0));
+        ColourEngine::SetBrightness(1.0f);
+        ColourEngine::SetRGBW(colour);
 
     }
+    ColourEngine::PowerOn(1000);
 
-    _LAT(PIO_LED2) = HIGH;
+    //_LAT(PIO_LED2) = HIGH;
 
     while (1) {
         USBDeviceTasks();
         USBUserProcess();
- 
-
 
         // Convenience - pressing PGM also resets the device
         if (_PORT(PIO_BTN1) == HIGH) {

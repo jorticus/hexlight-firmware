@@ -8,115 +8,123 @@
 #include "hardware.h"
 
 #include "colourengine.h"
+#include "fade.h"
 
 
 namespace ColourEngine {
 
-    typedef enum { clRGB, clXYZ, clXYY } colourspace_t;
+    typedef enum { clRawRGBW, clSRGBW, clXYZ, clXYY } colourspace_t;
 
-    colourspace_t current_colourspace = clRGB;
-    bool linear_colour = false; // If true, the colours are processed linearly, ie. no perceptual correction is done.
+    colourspace_t current_colourspace = clSRGBW;
 
-    RGBColour current_rgb;
-    XYZColour current_xyz;
-    XYYColour current_xyy;
+    q15 current_brightness = Q15(0.0);
+    RGBWColour current_rgbw;
+//    XYZColour current_xyz;
+//    XYYColour current_xyy;
 
-
-
-    static uint cielum(uint intensity) {
-        // Converts raw linear intensity to perceptually-linear luminance,
-        // using the CIE1931 perceptual luminance model
-//        if (intensity <= 0.08) {
-//            return intensity * 0.110705;
-//        } else {
-//            float a = (intensity + 0.16) * 0.86207;
-//            return a*a*a;
-//        }
-        //TODO
-    }
-
-
+    Fader brightness_fader(&current_brightness, 1, NULL);
 
     static void Update() {
         _LAT(PIO_LED2) = HIGH;
-        uint a=0, b=0, c=0, d=0;
 
-        switch (current_colourspace) {
-            case clRGB:
-                a = current_rgb.red;
-                b = current_rgb.green;
-                c = current_rgb.blue;
-                d = 0;
-                break;
+        //RGBWColour colour = current_rgbw;// * current_brightness;
+        RGBWColour colour(current_brightness, current_brightness, current_brightness);
 
-            case clXYZ:
-                //TODO: XYZ to RGB
-                break;
+        // Raw RGBW values are passed directly to the PWM outputs.
+        // Note that scaling by brightness will probably not look right, so refrain from using brightness control in this case!
 
-            case clXYY:
-                //TODO: xyY to RGB
-                break;
+        // sRGBW values operate in a perceptually-uniform colour space
+        // ie, 0.5 = half brightness (not half power!)
+        // These values can be scaled while still appearing linear.
+        if (colour.space == RGBWColour::sRGB) {
+            colour = colour.to_linear();
         }
 
-        if (!linear_colour) {
-            a = cielum(a);
-            b = cielum(b);
-            c = cielum(c);
-            d = cielum(d);
-        }
-
-        PWMUpdate(Q15(a), Q15(b), Q15(c), Q15(d));
+        PWMUpdate(colour.red, colour.green, colour.blue, colour.white);
         _LAT(PIO_LED2) = LOW;
     }
 
-
-
     void Initialize() {
         // Set initial PWM values
+        current_rgbw = RGBWColour(0, 0, 0, 0);
         Update();
     }
 
     void Tick1ms() {
-
+        // Animation
+        if (brightness_fader.is_fading) {
+            brightness_fader.update();
+            Update();
+        }
     }
 
+    void SetBrightness(q15 brightness) {
+        if (brightness_fader.is_fading) {
+            brightness_fader.set_target(brightness);
+        }
+        else {
+            current_brightness = brightness;
+            Update();
+        }
+    }
 
-    void SetRGB(RGBColour colour) {
-        current_rgb = colour;
-        current_colourspace = clRGB;
+    void SetRGBW(const RGBWColour& colour) {
+        current_rgbw = colour;
+        current_colourspace = (colour.space == RGBWColour::sRGB) ? clSRGBW : clRawRGBW;
         Update();
     }
-    void SetXYY(XYYColour colour) {
-        current_xyy = colour;
-        current_colourspace = clXYY;
-        Update();
-    }
-    void SetXYZ(XYZColour colour) {
-        current_xyz = colour;
-        current_colourspace = clXYZ;
-        Update();
-    }
+//    void SetXYY(XYYColour colour) {
+//        current_xyy = colour;
+//        current_colourspace = clXYY;
+//        Update();
+//    }
+//    void SetXYZ(XYZColour colour) {
+//        current_xyz = colour;
+//        current_colourspace = clXYZ;
+//        Update();
+//    }
 
-    RGBColour GetRGB() {
-        return current_rgb;
+    const RGBWColour& GetRGB() {
+        return current_rgbw;
     }
-    XYYColour GetXYY() {
-        return current_xyy;
-    }
-    XYZColour GetXYZ() {
-        return current_xyz;
-    }
+//    XYYColour GetXYY() {
+//        return current_xyy;
+//    }
+//    XYZColour GetXYZ() {
+//        return current_xyz;
+//    }
 
-    void CalibrateChannel(uint channel, XYYColour colour_point) {
-        //TODO
-    }
+//    void CalibrateChannel(uint channel, XYYColour colour_point) {
+//        //TODO
+//    }
 
     void PowerOn(uint fade) {
         PWMEnable();
+        if (fade == 0) {
+            Update();
+        }
+        else {
+            brightness_fader.speed = Q15(1.0) / fade;
+            brightness_fader.start(Q15(1.0));
+        }
     }
-    void PowerOff(uint fade) {
+
+    static void BrightnessFaderFinished() {
+        brightness_fader.on_finished = NULL;
         PWMDisable();
     }
+
+    void PowerOff(uint fade) {
+        if (fade == 0) {
+            PWMDisable();
+        }
+        else {
+            brightness_fader.speed = Q15(1.0) / fade;
+            brightness_fader.on_finished = &BrightnessFaderFinished;
+            brightness_fader.start(Q15(0.0));
+        }
+    }
+
 
 }
 
