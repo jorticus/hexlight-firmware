@@ -9,18 +9,16 @@
 static q15 cielum(q15 intensity) {
     // Converts raw linear intensity to perceptually-linear luminance,
     // using the CIE1931 perceptual luminance model
-//        if (intensity <= 0.08) {
-//            return intensity * 0.110705;
-//        } else {
-//            float a = (intensity + 0.16) * 0.86207;
-//            return a*a*a;
-//        }
-    //TODO
-    return intensity;
+    if (intensity <= Q15(0.08)) {
+        return intensity * Q15(0.110705);
+    } else {
+        q15 a = (intensity * Q15(0.86207)) + Q15(0.1379312);
+        return a*a*a;
+    }
 }
 
 
-const RGBWColour RGBWColour::to_linear() {
+RGBWColour RGBWColour::to_linear() {
     return RGBWColour(
         cielum(this->red),
         cielum(this->green),

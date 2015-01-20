@@ -22,7 +22,7 @@ public:
     RGBWColour(q15 red=0, q15 green=0, q15 blue=0, q15 white=0, space_t space=sRGB) :
         red(red), green(green), blue(blue), white(white), space(space) { }
 
-    const RGBWColour to_linear();
+    RGBWColour to_linear();
 
     friend RGBWColour operator*(const RGBWColour& lhs, q15 rhs);
     friend RGBWColour operator*(q15 lhs, const RGBWColour& rhs);

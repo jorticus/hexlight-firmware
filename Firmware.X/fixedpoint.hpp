@@ -136,14 +136,16 @@ protected:
     int16_t _value;
 };
 
+#define FRACTIONAL(I,F,X) fractional<I,F>( (X < 0.0) ? (INT16)((1<<F)*(X)-0.5) : (INT16)(((1<<F)-1)*(X)+0.5) )
 
 
 // Convenience typedefs
-typedef fractional<1,15> q15;
+typedef fractional<1,15> q15; // -1.0 .. 1.0
+typedef fractional<2,14> q14; // -2.0 .. 2.0
 
 // Macros for converting between floating point and fixed point at compile-time
-#define Q15(X) \
-   fractional<1,15>((X < 0.0) ? (INT16)(32768*(X) - 0.5) : (INT16)(32767*(X) + 0.5))
+#define Q15(X) FRACTIONAL(1,15,X)
+#define Q14(X) FRACTIONAL(2,14,X)
 
 #define Q15_MAXINT  32767
 #define Q15_MININT -32768
