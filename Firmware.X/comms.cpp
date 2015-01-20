@@ -38,11 +38,16 @@ int ProcessCommand(byte command, byte* payload_data, byte payload_len, byte* rep
             //pl_mode mode = *(pl_mode*)payload_data;
             break;
 
-        // Directly set the raw linear PWM values (0-32767), for each of the four channels.
+        // Set the raw RGBW values
         case CMD_SET_PWM:
             if (payload_len == sizeof(pl_pwm_t)) {
                 pl_pwm_t* payload = (pl_pwm_t*)payload_data;
-                PWMUpdate(payload->ch1, payload->ch2, payload->ch3, payload->ch4);
+                ColourEngine::SetRGBW(RGBWColour(
+                    payload->ch1,
+                    payload->ch2,
+                    payload->ch3,
+                    payload->ch4
+                ));
                 return RESULT_SUCCESS;
             } else return ERROR_INVALID_PAYLOAD;
             break;

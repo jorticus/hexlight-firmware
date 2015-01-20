@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include "common.h"
 #include "fixedpoint.hpp"
+#include "math.hpp"
 #include "pwm.h"
 #include "hardware.h"
 
@@ -18,7 +19,7 @@ namespace ColourEngine {
     colourspace_t current_colourspace = clSRGBW;
 
     q15 current_brightness = Q15(0.0);
-    RGBWColour current_rgbw;
+    RGBWColour current_rgbw = RGBWColour(Q15(1.0), Q15(1.0), Q15(1.0), Q15(1.0));
 //    XYZColour current_xyz;
 //    XYYColour current_xyy;
 
@@ -27,6 +28,7 @@ namespace ColourEngine {
     static void Update() {
         _LAT(PIO_LED2) = HIGH;
 
+        // Adjust current colour by brightness
         RGBWColour colour = current_rgbw * current_brightness;
 
         // Raw RGBW values are passed directly to the PWM outputs.
@@ -53,8 +55,8 @@ namespace ColourEngine {
         // Animation
         if (brightness_fader.is_fading) {
             brightness_fader.update();
-            Update();
         }
+        Update();
     }
 
     void SetBrightness(q15 brightness) {
@@ -70,7 +72,7 @@ namespace ColourEngine {
     void SetRGBW(const RGBWColour& colour) {
         current_rgbw = colour;
         current_colourspace = (colour.space == RGBWColour::sRGB) ? clSRGBW : clRawRGBW;
-        Update();
+        //Update();
     }
 //    void SetXYY(XYYColour colour) {
 //        current_xyy = colour;
@@ -103,7 +105,7 @@ namespace ColourEngine {
             Update();
         }
         else {
-            brightness_fader.speed = q15(Q15_MAXINT / fade);  // Equivalent to (1.0f / fade)
+            brightness_fader.speed = q15(max(Q15_MAXINT / fade, 1));  // Equivalent to (1.0f / fade)
             brightness_fader.start(Q15(1.0));
         }
     }
@@ -118,7 +120,7 @@ namespace ColourEngine {
             PWMDisable();
         }
         else {
-            brightness_fader.speed = q15(Q15_MAXINT / fade);  // Equivalent to (1.0f / fade)
+            brightness_fader.speed = q15(max(Q15_MAXINT / fade, 1));  // Equivalent to (1.0f / fade)
             brightness_fader.on_finished = &BrightnessFaderFinished;
             brightness_fader.start(Q15(0.0));
         }

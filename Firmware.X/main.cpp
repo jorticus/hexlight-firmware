@@ -62,7 +62,8 @@ extern "C" {
 #endif
 
 
-#define TICK_FREQUENCY 1000
+// TODO - Verify tick frequency
+#define TICK_FREQUENCY 200
 
 unsigned int sys_clock = F_SYSCLK;
 unsigned int pb_clock = F_SYSCLK;
@@ -162,13 +163,9 @@ int main(void) {
     _LAT(PIO_LED1) = HIGH;
 
     ColourEngine::Initialize();
-    {
-        RGBWColour colour(Q15(1.0), Q15(0.0), Q15(2.0), Q15(1.0));
-        //ColourEngine::SetBrightness(Q15(1.0));
-        ColourEngine::SetRGBW(colour);
-
-    }
-    ColourEngine::PowerOn(1000);
+    //ColourEngine::SetBrightness(Q15(0.0));
+    //ColourEngine::SetRGBW(RGBWColour(Q15(1.0), Q15(1.0), Q15(1.0), Q15(1.0)));
+    ColourEngine::PowerOn(1000); // Fade in
 
     //_LAT(PIO_LED2) = HIGH;
 
@@ -188,7 +185,9 @@ int main(void) {
 extern "C" {
     void __ISR(_TIMER_4_VECTOR, IPL2SOFT) tick_timer_isr() {
         INTClearFlag(INT_T4);
+        _LAT(PIO_LED2) = HIGH;
         ColourEngine::Tick1ms();
+        _LAT(PIO_LED2) = LOW;
         //toggle(PIO_LED2);
     }
 }

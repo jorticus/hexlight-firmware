@@ -29,6 +29,7 @@
       </logicalFolder>
       <logicalFolder name="f5" displayName="utils" projectFiles="true">
         <itemPath>fixedpoint.hpp</itemPath>
+        <itemPath>math.hpp</itemPath>
       </logicalFolder>
       <itemPath>hardware.h</itemPath>
       <itemPath>common.h</itemPath>
