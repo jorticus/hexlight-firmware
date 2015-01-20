@@ -6,7 +6,7 @@
  */
 
 #include "common.h"
-#include "dsp.h"
+#include "fixedpoint.hpp"
 #include "fade.h"
 
 Fader::Fader(q15* variable, q15 speed, finished_cb on_finished)

@@ -163,8 +163,8 @@ int main(void) {
 
     ColourEngine::Initialize();
     {
-        RGBWColour colour(Q15(1.0), Q15(1.0), Q15(1.0), Q15(1.0));
-        ColourEngine::SetBrightness(1.0f);
+        RGBWColour colour(Q15(1.0), Q15(0.0), Q15(2.0), Q15(1.0));
+        //ColourEngine::SetBrightness(Q15(1.0));
         ColourEngine::SetRGBW(colour);
 
     }

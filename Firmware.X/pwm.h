@@ -8,9 +8,7 @@
 #ifndef PWM_H
 #define	PWM_H
 
-#ifdef	__cplusplus
-extern "C" {
-#endif
+#include "fixedpoint.hpp"
 
 typedef enum { PWM1=0, PWM2, PWM3, PWM4 } pwm_channel_t;
 
@@ -28,15 +26,12 @@ void PWMDisable();
 void PWMSetScaler(pwm_prescaler_t ps);
 
 // Adjust the PWM duty cycle
-void PWMSetChannel(pwm_channel_t channel, INT16 value);
-void PWMUpdate(INT16 ch1, INT16 ch2, INT16 ch3, INT16 ch4);
+void PWMSetChannel(pwm_channel_t channel, q15 value);
+void PWMUpdate(q15 ch1, q15 ch2, q15 ch3, q15 ch4);
 
 void PWMAllOn();
 void PWMAllOff();
 
-#ifdef	__cplusplus
-}
-#endif
 
 #endif	/* PWM_H */
 

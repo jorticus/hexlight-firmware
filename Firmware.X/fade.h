@@ -8,7 +8,7 @@
 #ifndef FADE_H
 #define	FADE_H
 
-#include "dsp.h"
+#include "fixedpoint.hpp"
 
 typedef void (*finished_cb)(void);
 

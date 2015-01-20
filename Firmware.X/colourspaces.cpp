@@ -1,12 +1,12 @@
 
 #include "common.h"
-#include "dsp.h"
+#include "fixedpoint.hpp"
 
 #include "colourspaces.h"
 #include "colourengine.h"
 
 
-static uint cielum(uint intensity) {
+static q15 cielum(q15 intensity) {
     // Converts raw linear intensity to perceptually-linear luminance,
     // using the CIE1931 perceptual luminance model
 //        if (intensity <= 0.08) {
@@ -26,5 +26,23 @@ const RGBWColour RGBWColour::to_linear() {
         cielum(this->green),
         cielum(this->blue),
         cielum(this->white)
+    );
+}
+
+RGBWColour operator*(const RGBWColour& lhs, q15 rhs) {
+    return RGBWColour(
+        lhs.red * rhs,
+        lhs.green * rhs,
+        lhs.blue * rhs,
+        lhs.white * rhs
+    );
+}
+
+RGBWColour operator*(q15 lhs, const RGBWColour& rhs) {
+    return RGBWColour(
+        lhs * rhs.red,
+        lhs * rhs.green,
+        lhs * rhs.blue,
+        lhs * rhs.white
     );
 }

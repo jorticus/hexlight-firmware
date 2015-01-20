@@ -16,6 +16,7 @@
 #include "common.h"
 #include "hardware.h"
 #include "pwm.h"
+#include "fixedpoint.hpp"
 
 // These map PWM channels to OC outputs
 #ifdef BOARD_UBW32
@@ -34,10 +35,10 @@ volatile unsigned int* OCRS[] = {&OC3RS, &OC2RS, &OC4RS, &OC1RS};
 
 
 
-static inline UINT16 calc_duty(INT16 value) {
+static inline UINT16 calc_duty(q15 value) {
     // Input range is 0-32767, output range is 0-PWM_PR
     // Using signed ints for compatibility with Q15 fractional datatype
-    return (value > 0) ? (PWM_PR * (INT32)value) / 32767 : 0;
+    return (value > 0) ? (PWM_PR * (INT32)value.value()) / 32767 : 0;
 }
 
 
@@ -101,11 +102,11 @@ void PWMSetScaler(pwm_prescaler_t ps) {
 }
 
 
-void PWMSetChannel(pwm_channel_t channel, INT16 value) {
+void PWMSetChannel(pwm_channel_t channel, q15 value) {
     *OCRS[channel] = calc_duty(value);
 }
 
-void PWMUpdate(INT16 ch1, INT16 ch2, INT16 ch3, INT16 ch4) {
+void PWMUpdate(q15 ch1, q15 ch2, q15 ch3, q15 ch4) {
     *OCRS[PWM1] = calc_duty(ch1);
     *OCRS[PWM2] = calc_duty(ch2);
     *OCRS[PWM3] = calc_duty(ch3);

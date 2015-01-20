@@ -3,8 +3,8 @@
 #include <p32xxxx.h>
 #include <cstdlib>
 #include "common.h"
+#include "fixedpoint.hpp"
 #include "pwm.h"
-#include "dsp.h"
 #include "hardware.h"
 
 #include "colourengine.h"
@@ -27,8 +27,7 @@ namespace ColourEngine {
     static void Update() {
         _LAT(PIO_LED2) = HIGH;
 
-        //RGBWColour colour = current_rgbw;// * current_brightness;
-        RGBWColour colour(current_brightness, current_brightness, current_brightness);
+        RGBWColour colour = current_rgbw * current_brightness;
 
         // Raw RGBW values are passed directly to the PWM outputs.
         // Note that scaling by brightness will probably not look right, so refrain from using brightness control in this case!
@@ -104,7 +103,7 @@ namespace ColourEngine {
             Update();
         }
         else {
-            brightness_fader.speed = Q15(1.0) / fade;
+            brightness_fader.speed = q15(Q15_MAXINT / fade);  // Equivalent to (1.0f / fade)
             brightness_fader.start(Q15(1.0));
         }
     }
@@ -119,7 +118,7 @@ namespace ColourEngine {
             PWMDisable();
         }
         else {
-            brightness_fader.speed = Q15(1.0) / fade;
+            brightness_fader.speed = q15(Q15_MAXINT / fade);  // Equivalent to (1.0f / fade)
             brightness_fader.on_finished = &BrightnessFaderFinished;
             brightness_fader.start(Q15(0.0));
         }

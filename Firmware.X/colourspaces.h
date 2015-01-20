@@ -8,6 +8,8 @@
 #ifndef COLOURSPACES_H
 #define	COLOURSPACES_H
 
+#include "fixedpoint.hpp"
+
 class Colour {
     // Abstract base class
 };
@@ -20,10 +22,10 @@ public:
     RGBWColour(q15 red=0, q15 green=0, q15 blue=0, q15 white=0, space_t space=sRGB) :
         red(red), green(green), blue(blue), white(white), space(space) { }
 
-    //operator* ();
-
-//    const RGBWColour to_srgb();
     const RGBWColour to_linear();
+
+    friend RGBWColour operator*(const RGBWColour& lhs, q15 rhs);
+    friend RGBWColour operator*(q15 lhs, const RGBWColour& rhs);
 
     q15 red, green, blue, white;
     space_t space;

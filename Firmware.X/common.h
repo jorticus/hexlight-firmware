@@ -22,7 +22,6 @@ typedef unsigned char bool;
 
 #define _XKEYCHECK // TODO: Don't know why I had to define this, but it makes the program compile.
 #include <GenericTypeDefs.h>
-#include "dsp.h"
 
 #endif	/* COMMON_H */
 
