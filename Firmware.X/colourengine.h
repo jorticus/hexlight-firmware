@@ -13,9 +13,12 @@
 #include "colourspaces.h"
 
 namespace ColourEngine {
-    void Initialize();
-    void Tick1ms();
+    typedef enum { mOff, mManual, mHsvFade, mStrobe, NUM_MODES } mode_t;
 
+    void Initialize();
+    void Tick();
+
+    void SetMode(mode_t mode, q15 param = Q15(0.0));
 
     void SetBrightness(q15 brightness);
 

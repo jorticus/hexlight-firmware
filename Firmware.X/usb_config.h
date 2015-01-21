@@ -118,7 +118,7 @@
 
 //#define USB_USE_CDC
 #define USB_USE_HID
-#define USB_USE_AUDIO_CLASS
+//#define USB_USE_AUDIO_CLASS
 
 #if defined(USB_USE_CDC) && defined(USB_USE_HID)
     #error CDC and HID communication cannot be enabled at the same time

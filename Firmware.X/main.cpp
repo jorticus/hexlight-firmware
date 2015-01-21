@@ -63,11 +63,13 @@ extern "C" {
 
 
 // TODO - Verify tick frequency
-#define TICK_FREQUENCY 200
+#define TICK_FREQUENCY 250
 
 unsigned int sys_clock = F_SYSCLK;
 unsigned int pb_clock = F_SYSCLK;
 
+uint8_t mode = 0;
+static bool last_btn2 = false;
 
 void SystickInit() {
     OpenTimer4(T4_ON | T4_IDLE_CON | T4_PS_1_8 | T4_32BIT_MODE_OFF | T4_SOURCE_INT, pb_clock/8/TICK_FREQUENCY);
@@ -95,36 +97,41 @@ void InitializeSystem() {
     ANSELA = 0x0000;
     ANSELB = 0x0000;
 #endif
+    LATA = 0x0000;
+    LATB = 0x0000;
 
     // Ensure LED drivers are driven low as soon as possible
-    _TRIS(PIO_OC1) = 0;
-    _TRIS(PIO_OC2) = 0;
-    _TRIS(PIO_OC3) = 0;
-    _TRIS(PIO_OC4) = 0;
-    _LAT(PIO_OC1) = OUTPUT;
-    _LAT(PIO_OC2) = OUTPUT;
-    _LAT(PIO_OC3) = OUTPUT;
-    _LAT(PIO_OC4) = OUTPUT;
+//    _TRIS(PIO_OC1) = 0;
+//    _TRIS(PIO_OC2) = 0;
+//    _TRIS(PIO_OC3) = 0;
+//    _TRIS(PIO_OC4) = 0;
+//    _LAT(PIO_OC1) = OUTPUT;
+//    _LAT(PIO_OC2) = OUTPUT;
+//    _LAT(PIO_OC3) = OUTPUT;
+//    _LAT(PIO_OC4) = OUTPUT;
 
     // Force disconnect of USB bootloader
     U1CON = 0x00000000;
     U1PWRC = 0x00000000;
 
     // LEDs
-    _TRIS(PIO_LED1) = OUTPUT;
-    _TRIS(PIO_LED2) = OUTPUT;
+//    _TRIS(PIO_LED1) = OUTPUT;
+//    _TRIS(PIO_LED2) = OUTPUT;
 #ifdef BOARD_UBW32
     _TRIS(PIO_LED3) = OUTPUT;
     _TRIS(PIO_LED_USB) = OUTPUT;
     _TRIS(PIO_BTN_PGM) = 1;
     _TRIS(PIO_BTN_USR) = 1;
+#elif BOARD_HEXLIGHT
+    _TRIS(PIO_BTN1) = INPUT;
+    _TRIS(PIO_BTN2) = INTPUT;
 #endif
 
-    _TRIS(PIO_USBP) = INPUT;
-    _TRIS(PIO_USBN) = INPUT;
+//    _TRIS(PIO_USBP) = INPUT;
+//    _TRIS(PIO_USBN) = INPUT;
 
-    _LAT(PIO_LED1) = LOW;
-    _LAT(PIO_LED2) = LOW;
+//    _LAT(PIO_LED1) = LOW;
+//    _LAT(PIO_LED2) = LOW;
 #ifdef BOARD_UBW32
     _LAT(PIO_LED3) = HIGH;
     _LAT(PIO_LED_USB) = LOW;
@@ -148,7 +155,6 @@ void InitializeSystem() {
 
 
 int main(void) {
-
     InitializeSystem();
 
     // Wait for reset button to be released
@@ -185,9 +191,18 @@ int main(void) {
 extern "C" {
     void __ISR(_TIMER_4_VECTOR, IPL2SOFT) tick_timer_isr() {
         INTClearFlag(INT_T4);
-        _LAT(PIO_LED2) = HIGH;
-        ColourEngine::Tick1ms();
-        _LAT(PIO_LED2) = LOW;
+        ColourEngine::Tick();
         //toggle(PIO_LED2);
+
+        // Switch mode
+        if (_PORT(PIO_BTN2) == HIGH) {
+            last_btn2 = HIGH;
+        }
+        else if (last_btn2 == HIGH) {
+            last_btn2 = LOW;
+            if (mode++ == (int)ColourEngine::NUM_MODES-1)
+                mode = 0;
+            ColourEngine::SetMode(static_cast<ColourEngine::mode_t>(mode), Q15(0.0001));
+        }
     }
 }

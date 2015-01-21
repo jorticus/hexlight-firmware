@@ -16,12 +16,13 @@ namespace ColourEngine {
 
     typedef enum { clRawRGBW, clSRGBW, clXYZ, clXYY } colourspace_t;
 
+    q15 mode_param;
+    mode_t current_mode = mManual;
     colourspace_t current_colourspace = clSRGBW;
 
     q15 current_brightness = Q15(0.0);
     RGBWColour current_rgbw = RGBWColour(Q15(1.0), Q15(1.0), Q15(1.0), Q15(1.0));
-//    XYZColour current_xyz;
-//    XYYColour current_xyy;
+    HSVColour current_hsv = HSVColour(Q15(0.0), Q15(1.0), Q15(1.0));
 
     Fader brightness_fader(&current_brightness, 1, NULL);
 
@@ -46,17 +47,7 @@ namespace ColourEngine {
     }
 
     void Initialize() {
-        // Set initial PWM values
-        current_rgbw = RGBWColour(0, 0, 0, 0);
-        Update();
-    }
 
-    void Tick1ms() {
-        // Animation
-        if (brightness_fader.is_fading) {
-            brightness_fader.update();
-        }
-        Update();
     }
 
     void SetBrightness(q15 brightness) {
@@ -65,39 +56,18 @@ namespace ColourEngine {
         }
         else {
             current_brightness = brightness;
-            Update();
+            //Update();
         }
     }
 
     void SetRGBW(const RGBWColour& colour) {
         current_rgbw = colour;
         current_colourspace = (colour.space == RGBWColour::sRGB) ? clSRGBW : clRawRGBW;
-        //Update();
     }
-//    void SetXYY(XYYColour colour) {
-//        current_xyy = colour;
-//        current_colourspace = clXYY;
-//        Update();
-//    }
-//    void SetXYZ(XYZColour colour) {
-//        current_xyz = colour;
-//        current_colourspace = clXYZ;
-//        Update();
-//    }
 
     const RGBWColour& GetRGB() {
         return current_rgbw;
     }
-//    XYYColour GetXYY() {
-//        return current_xyy;
-//    }
-//    XYZColour GetXYZ() {
-//        return current_xyz;
-//    }
-
-//    void CalibrateChannel(uint channel, XYYColour colour_point) {
-//        //TODO
-//    }
 
     void PowerOn(uint fade) {
         PWMEnable();
@@ -105,7 +75,7 @@ namespace ColourEngine {
             Update();
         }
         else {
-            brightness_fader.speed = q15(max(Q15_MAXINT / fade, 1));  // Equivalent to (1.0f / fade)
+            brightness_fader.speed = q15(max(Q15_MAXINT / (fade/4), 1));  // Equivalent to (1.0f / fade)
             brightness_fader.start(Q15(1.0));
         }
     }
@@ -120,12 +90,53 @@ namespace ColourEngine {
             PWMDisable();
         }
         else {
-            brightness_fader.speed = q15(max(Q15_MAXINT / fade, 1));  // Equivalent to (1.0f / fade)
+            brightness_fader.speed = q15(max(Q15_MAXINT / (fade/4), 1));  // Equivalent to (1.0f / fade)
             brightness_fader.on_finished = &BrightnessFaderFinished;
             brightness_fader.start(Q15(0.0));
         }
     }
 
 
+    void SetMode(mode_t mode, q15 param) {
+        if (current_mode != mode) {
+            if (mode == mOff) {
+                PowerOff(1000);
+            }
+            else if (current_mode == mOff) {
+                PowerOn(1000);
+            }
+            current_mode = mode;
+        }
+        mode_param = param;
+    }
+
+    void Tick() {
+        // Animation
+        if (brightness_fader.is_fading) {
+            brightness_fader.update();
+        }
+
+        switch (current_mode) {
+            case mManual:
+                break; // Do nothing, let SetRGBW control the colour
+
+            case mHsvFade: {
+                current_hsv.hue += mode_param;
+                current_rgbw = current_hsv.to_rgbw();
+                break;
+            }
+
+            case mStrobe: {
+                current_hsv.hue += Q15(0.01);
+                current_rgbw = current_hsv.to_rgbw();
+                break;
+            }
+
+        }
+
+        // Update the colour every tick.
+        // We don't need to update it any faster than this
+        Update();
+    }
 }
 
