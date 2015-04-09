@@ -70,7 +70,6 @@ void PWMInitialize() {
     OpenOC4(OCxCON, 0, 0);
 
     PWMSetChannel(PWM1, Q15(0));
-
     PWMSetChannel(PWM2, Q15(0));
     PWMSetChannel(PWM3, Q15(0));
     PWMSetChannel(PWM4, Q15(0));
@@ -86,7 +85,7 @@ void PWMEnable() {
 }
 void PWMDisable() {
     // Disable all OC channels
-    T2CONbits.ON = 0;
+    //T2CONbits.ON = 0;
     OC1CONbits.ON = 0;
     OC2CONbits.ON = 0;
     OC3CONbits.ON = 0;

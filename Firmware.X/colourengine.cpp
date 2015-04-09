@@ -49,14 +49,14 @@ const RGBWColour& ColourEngine::GetRGBW() {
 }
 
 void ColourEngine::PowerOn(uint fade) {
-    PWMEnable();
-    if (fade == 0) {
-        Update();
-    }
-    else {
+    if (fade > 0) {
         brightness_fader.speed = q15(max(Q15_MAXINT / (fade/4), 1));  // Equivalent to (1.0f / fade)
+        brightness_fader.on_finished = NULL;
         brightness_fader.start(Q15(1.0));
     }
+    
+    Update();
+    PWMEnable();
 }
 
 void ColourEngine::PowerOff(uint fade) {
@@ -89,6 +89,12 @@ void ColourEngine::SetPower(power_t power, uint fade) {
 
 void ColourEngine::SetMode(mode_t mode, q15 param) {
     current_mode = mode;
+
+    // Reset colour in manual mode
+    if (mode == mManual) {
+        current_rgbw = RGBWColour(Q15(1.0), Q15(1.0), Q15(1.0), Q15(1.0));
+    }
+
     mode_param = param;
 }
 
