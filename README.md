@@ -2,7 +2,7 @@
 
 Language: PIC32 C/C++
 
-Supported Hardware: PIC32MX460F512L (As used in the UBW32 dev board) & PIC32MX220F032B (for my custom hardware)
+Supported Hardware: PIC32MX270F256B (HexLight Hardware)
 
 A 4-channel LED controller, supporting advanced colour models, and communication over USB and RS485.
 This complements my other project, [HexLight-GUI](/jorticus/hexlight-gui)

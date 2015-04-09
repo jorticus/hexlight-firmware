@@ -68,6 +68,7 @@ extern "C" {
 unsigned int sys_clock = F_SYSCLK;
 unsigned int pb_clock = F_SYSCLK;
 
+bool power = false;
 uint8_t mode = 0;
 static bool last_btn2 = false;
 
@@ -124,7 +125,7 @@ void InitializeSystem() {
     _TRIS(PIO_BTN_USR) = 1;
 #elif BOARD_HEXLIGHT
     _TRIS(PIO_BTN1) = INPUT;
-    _TRIS(PIO_BTN2) = INTPUT;
+    _TRIS(PIO_BTN2) = INPUT;
 #endif
 
 //    _TRIS(PIO_USBP) = INPUT;
@@ -169,8 +170,6 @@ int main(void) {
     _LAT(PIO_LED1) = HIGH;
 
     ColourEngine::Initialize();
-    //ColourEngine::SetBrightness(Q15(0.0));
-    //ColourEngine::SetRGBW(RGBWColour(Q15(1.0), Q15(1.0), Q15(1.0), Q15(1.0)));
     ColourEngine::PowerOn(1000); // Fade in
 
     //_LAT(PIO_LED2) = HIGH;
@@ -178,11 +177,6 @@ int main(void) {
     while (1) {
         USBDeviceTasks();
         USBUserProcess();
-
-        // Convenience - pressing PGM also resets the device
-        if (_PORT(PIO_BTN1) == HIGH) {
-            SoftReset();
-        }
     }
 
     return 0;
