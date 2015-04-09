@@ -78,16 +78,24 @@ int ProcessCommand(byte command, byte* payload_data, byte payload_len, byte* rep
             break;*/
 
         case CMD_ENABLE_USBAUDIO:
+            #ifdef USB_USE_AUDIO_CLASS
             if (payload_len == 1) {
                 enableUsbAudio = (bool)payload_data[0];
                 _LAT(PIO_LED1) = enableUsbAudio;
                 return RESULT_SUCCESS;
             } else return ERROR_INVALID_PAYLOAD;
+            #else
+            return RESULT_SUCCESS;
+            #endif
             break;
+
 
     }
     return ERROR_INVALID_COMMAND;
 }
+
+
+#ifdef COMMS_USE_RS485
 
 int UnescapeData(byte* src_buf, byte* dst_buf, uint src_len, uint dst_len) {
     int srci, dsti;
@@ -291,3 +299,5 @@ bool ProtocolFramer::TxWrite(byte b) {
 
     return TRUE;
 }
+
+#endif

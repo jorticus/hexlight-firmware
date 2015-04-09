@@ -9,6 +9,11 @@
 #define	COMMS_H
 
 
+#define COMMS_USE_USB
+#define COMMS_USE_RS485
+
+
+#ifdef COMMS_USE_RS485
 typedef struct __attribute__((packed)) {
     //byte sof;
     byte command;
@@ -20,10 +25,6 @@ typedef struct __attribute__((packed)) {
    // byte eof;
 } packet_footer_t;
 
-#define RESULT_PROCESSING 0
-#define RESULT_SUCCESS 1
-#define RESULT_ERROR -1
-
 #define MIN_PACKET_SIZE (sizeof(packet_header_t) + sizeof(packet_footer_t))
 #define MAX_PACKET_SIZE 64
 #define MAX_PAYLOAD_SIZE (MAX_PACKET_SIZE - MIN_PACKET_SIZE)
@@ -33,16 +34,6 @@ typedef struct __attribute__((packed)) {
 #define HLDC_FRAME_DELIMITER 0x7E
 #define HLDC_ESCAPE 0x7D
 #define HLDC_ESCAPE_MASK 0x20
-
-#define ERROR_UNKNOWN -1
-#define ERROR_PACKET_TOO_BIG -2
-#define ERROR_PACKET_TOO_SMALL -3
-#define ERROR_PAYLOAD_TOO_SMALL -4
-#define ERROR_UNESCAPE_ERROR -5
-#define ERROR_INVALID_CRC -6
-#define ERROR_FORMING_RESPONSE_PACKET -7
-#define ERROR_INVALID_COMMAND -8
-#define ERROR_INVALID_PAYLOAD -9
 
 class ProtocolFramer {
 public:
@@ -72,7 +63,21 @@ private:
 
     state_t rx_state;
 };
+#endif
 
+#define RESULT_PROCESSING 0
+#define RESULT_SUCCESS 1
+#define RESULT_ERROR -1
+
+#define ERROR_UNKNOWN -1
+#define ERROR_PACKET_TOO_BIG -2
+#define ERROR_PACKET_TOO_SMALL -3
+#define ERROR_PAYLOAD_TOO_SMALL -4
+#define ERROR_UNESCAPE_ERROR -5
+#define ERROR_INVALID_CRC -6
+#define ERROR_FORMING_RESPONSE_PACKET -7
+#define ERROR_INVALID_COMMAND -8
+#define ERROR_INVALID_PAYLOAD -9
 
 
 #include "colourspaces.h"
