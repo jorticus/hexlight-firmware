@@ -17,6 +17,7 @@ namespace ColourEngine {
     typedef enum { clRawRGBW, clSRGBW, clXYZ, clXYY } colourspace_t;
 
     q15 mode_param;
+    power_t current_power = OFF;
     mode_t current_mode = mManual;
     colourspace_t current_colourspace = clSRGBW;
 
@@ -96,17 +97,20 @@ namespace ColourEngine {
         }
     }
 
-
-    void SetMode(mode_t mode, q15 param) {
-        if (current_mode != mode) {
-            if (mode == mOff) {
-                PowerOff(1000);
-            }
-            else if (current_mode == mOff) {
+    void SetPower(power_t power) {
+        if (current_power != power) {
+            if (power == ON) {
                 PowerOn(1000);
             }
-            current_mode = mode;
+            else {
+                PowerOff(1000);
+            }
+            current_power = power;
         }
+    }
+
+    void SetMode(mode_t mode, q15 param) {
+        current_mode = mode;
         mode_param = param;
     }
 

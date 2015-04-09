@@ -68,8 +68,9 @@ extern "C" {
 unsigned int sys_clock = F_SYSCLK;
 unsigned int pb_clock = F_SYSCLK;
 
-bool power = false;
-uint8_t mode = 0;
+power_t power = ON;
+uint8_t mode = ColourEngine::mManual;
+static bool last_btn1 = false;
 static bool last_btn2 = false;
 
 void SystickInit() {
@@ -182,21 +183,30 @@ int main(void) {
     return 0;
 }
 
-extern "C" {
-    void __ISR(_TIMER_4_VECTOR, IPL2SOFT) tick_timer_isr() {
-        INTClearFlag(INT_T4);
-        ColourEngine::Tick();
-        //toggle(PIO_LED2);
+extern "C"
+void __ISR(_TIMER_4_VECTOR, IPL2SOFT) tick_timer_isr() {
+    INTClearFlag(INT_T4);
+    ColourEngine::Tick();
+    //toggle(PIO_LED2);
 
-        // Switch mode
-        if (_PORT(PIO_BTN2) == HIGH) {
-            last_btn2 = HIGH;
-        }
-        else if (last_btn2 == HIGH) {
-            last_btn2 = LOW;
-            if (mode++ == (int)ColourEngine::NUM_MODES-1)
-                mode = 0;
-            ColourEngine::SetMode(static_cast<ColourEngine::mode_t>(mode), Q15(0.0001));
-        }
+    // Power toggle
+    if (_PORT(PIO_BTN1) == HIGH) {
+        last_btn1 = HIGH;
+    }
+    else if (last_btn1 == HIGH) {
+        last_btn1 = LOW;
+        power = (power == OFF) ? ON : OFF;
+        ColourEngine::SetPower(power);
+    }
+
+    // Switch mode
+    if (_PORT(PIO_BTN2) == HIGH) {
+        last_btn2 = HIGH;
+    }
+    else if (last_btn2 == HIGH) {
+        last_btn2 = LOW;
+        if (mode++ == (int)ColourEngine::NUM_MODES-1)
+            mode = 0;
+        ColourEngine::SetMode(static_cast<ColourEngine::mode_t>(mode), Q15(0.0001));
     }
 }
