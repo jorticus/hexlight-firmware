@@ -5,6 +5,8 @@
  * Records audio from the microphone and computes the spectrum
  */
 
+// Disable wierd XC32 warning
+#define _DISABLE_OPENADC10_CONFIGPORT_WARNING
 
 #include <p32xxxx.h>
 #include <peripheral/timer.h>
@@ -181,7 +183,7 @@ static void swap_buffers() {
     INTClearFlag(INT_T3);
 }*/
 
-void __ISR(_ADC_VECTOR, IPL6) adc_isr(void) {
+void __ISR(_ADC_VECTOR, IPL6AUTO) adc_isr(void) {
     // Called when the ADC has finished sampling N samples
     //_LAT(PIO_LED3) = 1;
 

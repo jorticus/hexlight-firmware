@@ -2,8 +2,8 @@
 #include "common.h"
 #include "fixedpoint.hpp"
 
-#include "colourspaces.h"
-#include "colourengine.h"
+#include "colourspaces.hpp"
+#include "colourengine.hpp"
 
 
 static q15 cielum(q15 intensity) {

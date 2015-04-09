@@ -5,9 +5,9 @@
                    displayName="Header Files"
                    projectFiles="true">
       <logicalFolder name="f4" displayName="colour" projectFiles="true">
-        <itemPath>colourengine.h</itemPath>
-        <itemPath>colourspaces.h</itemPath>
-        <itemPath>fade.h</itemPath>
+        <itemPath>colourengine.hpp</itemPath>
+        <itemPath>colourspaces.hpp</itemPath>
+        <itemPath>fader.hpp</itemPath>
       </logicalFolder>
       <logicalFolder name="f3" displayName="comms" projectFiles="true">
         <itemPath>usb.h</itemPath>
@@ -47,7 +47,7 @@
       <logicalFolder name="f4" displayName="colour" projectFiles="true">
         <itemPath>colourengine.cpp</itemPath>
         <itemPath>colourspaces.cpp</itemPath>
-        <itemPath>fade.cpp</itemPath>
+        <itemPath>fader.cpp</itemPath>
       </logicalFolder>
       <logicalFolder name="f3" displayName="comms" projectFiles="true">
         <itemPath>usb.cpp</itemPath>
@@ -125,7 +125,8 @@
         <property key="place-data-into-section" value="false"/>
         <property key="post-instruction-scheduling" value="default"/>
         <property key="pre-instruction-scheduling" value="default"/>
-        <property key="preprocessor-macros" value="BOARD_HEXLIGHT"/>
+        <property key="preprocessor-macros"
+                  value="BOARD_HEXLIGHT;_SUPPRESS_PLIB_WARNING"/>
         <property key="strict-ansi" value="false"/>
         <property key="support-ansi" value="false"/>
         <property key="use-cci" value="false"/>
@@ -151,7 +152,7 @@
         <property key="generate-16-bit-code" value="false"/>
         <property key="generate-cross-reference-file" value="false"/>
         <property key="generate-micro-compressed-code" value="false"/>
-        <property key="heap-size" value=""/>
+        <property key="heap-size" value="1024"/>
         <property key="input-libraries" value=""/>
         <property key="linker-symbols" value=""/>
         <property key="map-file" value="${DISTDIR}/${PROJECTNAME}.${IMAGE_TYPE}.map"/>
@@ -185,12 +186,14 @@
         <property key="place-data-into-section" value="false"/>
         <property key="post-instruction-scheduling" value="default"/>
         <property key="pre-instruction-scheduling" value="default"/>
-        <property key="preprocessor-macros" value="BOARD_HEXLIGHT"/>
-        <property key="rtti" value="false"/>
+        <property key="preprocessor-macros"
+                  value="BOARD_HEXLIGHT;_SUPPRESS_PLIB_WARNING"/>
+        <property key="rtti" value="true"/>
         <property key="strict-ansi" value="false"/>
         <property key="use-cci" value="false"/>
         <property key="use-iar" value="false"/>
         <property key="use-indirect-calls" value="false"/>
+        <appendMe value="--std=gnu++0x"/>
       </C32CPP>
       <C32Global>
         <property key="common-include-directories" value=""/>

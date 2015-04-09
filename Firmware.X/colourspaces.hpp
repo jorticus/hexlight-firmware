@@ -1,12 +1,12 @@
 /* 
- * File:   colourspaces.h
+ * File:   colourspaces.hpp
  * Author: Jared
  *
  * Created on 28 June 2014, 2:38 PM
  */
 
-#ifndef COLOURSPACES_H
-#define	COLOURSPACES_H
+#ifndef COLOURSPACES_HPP
+#define	COLOURSPACES_HPP
 
 #include "fixedpoint.hpp"
 
@@ -77,5 +77,5 @@ public:
 //    q15 x, y, z;
 //};
 
-#endif	/* COLOURSPACES_H */
+#endif	/* COLOURSPACES_HPP */
 

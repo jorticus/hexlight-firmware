@@ -13,7 +13,7 @@ extern "C" {
 }
 #include "usb.h"
 #include "adc.h"
-#include "colourengine.h"
+#include "colourengine.hpp"
 #include "comms.h"
 
 bool usb_sleeping = FALSE;

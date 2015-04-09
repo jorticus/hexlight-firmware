@@ -5,7 +5,7 @@
 #include "comms.h"
 
 #include "pwm.h"
-#include "colourengine.h"
+#include "colourengine.hpp"
 
 extern bool enableUsbAudio;
 

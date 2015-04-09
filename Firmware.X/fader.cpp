@@ -7,7 +7,7 @@
 
 #include "common.h"
 #include "fixedpoint.hpp"
-#include "fade.h"
+#include "fader.hpp"
 
 Fader::Fader(q15* variable, q15 speed, finished_cb on_finished)
     : current(variable), target(*variable), speed(speed), cmp(*variable), inc(true), is_fading(false),

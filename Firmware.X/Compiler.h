@@ -52,6 +52,9 @@
 #ifndef __COMPILER_H
 #define __COMPILER_H
 
+// Disable weird XC32 warnings
+#define _DISABLE_OPENADC10_CONFIGPORT_WARNING
+
 // Include proper device header file
 #if defined(__18CXX) || defined(HI_TECH_C)	
 	// All PIC18 processors

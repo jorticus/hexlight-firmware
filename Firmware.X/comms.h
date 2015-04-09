@@ -80,7 +80,7 @@ private:
 #define ERROR_INVALID_PAYLOAD -9
 
 
-#include "colourspaces.h"
+#include "colourspaces.hpp"
 
 
 typedef struct {

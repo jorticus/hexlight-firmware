@@ -1,12 +1,12 @@
 /* 
- * File:   fade.h
+ * File:   fader.hpp
  * Author: Jared
  *
  * Created on 19 January 2015, 11:40 PM
  */
 
-#ifndef FADE_H
-#define	FADE_H
+#ifndef FADER_HPP
+#define	FADER_HPP
 
 #include "fixedpoint.hpp"
 
@@ -37,5 +37,5 @@ private:
 };
 
 
-#endif	/* FADE_H */
+#endif	/* FADER_HPP */
 

@@ -16,7 +16,6 @@
 
 
 #include <p32xxxx.h>
-#include <plib.h>
 #include <peripheral/timer.h>
 #include "common.h"
 #include "hardware.h"
@@ -29,7 +28,7 @@ extern "C" {
 #include "adc.h"
 #include "pwm.h"
 #include "usb.h"
-#include "colourengine.h"
+#include "colourengine.hpp"
 
 
 #ifdef BUILD_NO_BOOTLOADER
@@ -171,7 +170,8 @@ int main(void) {
     _LAT(PIO_LED1) = HIGH;
 
     ColourEngine::Initialize();
-    ColourEngine::PowerOn(1000); // Fade in
+    //ColourEngine::PowerOn(1000); // Fade in
+    ColourEngine::SetPower(power, 0);
 
     //_LAT(PIO_LED2) = HIGH;
 
@@ -196,7 +196,7 @@ void __ISR(_TIMER_4_VECTOR, IPL2SOFT) tick_timer_isr() {
     else if (last_btn1 == HIGH) {
         last_btn1 = LOW;
         power = (power == OFF) ? ON : OFF;
-        ColourEngine::SetPower(power);
+        ColourEngine::SetPower(power, 1000);
     }
 
     // Switch mode
