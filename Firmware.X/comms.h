@@ -10,60 +10,19 @@
 
 
 #define COMMS_USE_USB
-#define COMMS_USE_RS485
 
-
-#ifdef COMMS_USE_RS485
 typedef struct __attribute__((packed)) {
-    //byte sof;
     byte command;
     byte length;  // Length in bytes, including escape chars
 } packet_header_t;
 
 typedef struct __attribute__((packed)) {
     UINT16 crc;
-   // byte eof;
 } packet_footer_t;
 
 #define MIN_PACKET_SIZE (sizeof(packet_header_t) + sizeof(packet_footer_t))
 #define MAX_PACKET_SIZE 64
 #define MAX_PAYLOAD_SIZE (MAX_PACKET_SIZE - MIN_PACKET_SIZE)
-
-#define RX_BUFFER_SIZE 256
-
-#define HLDC_FRAME_DELIMITER 0x7E
-#define HLDC_ESCAPE 0x7D
-#define HLDC_ESCAPE_MASK 0x20
-
-class ProtocolFramer {
-public:
-    ProtocolFramer() :
-        rx_idx(0), tx_idx(0), rx_state(stWaitingForSOF)
-        {};
-
-
-    int ProcessData(byte* buf, int len);
-    bool PreparePacket(byte command, byte* payload, uint len);
-    
-    byte tx_buffer[MAX_PACKET_SIZE];
-    byte tx_size;
-
-private:
-    int ProcessByte(byte b);
-    int ProcessFrame(byte* data, uint len);
-    bool TxWrite(byte b);
-
-    typedef enum { stWaitingForSOF, stWaitingForHeader, stReadingFrame } state_t;
-
-    byte rx_buffer[MAX_PACKET_SIZE];
-    
-    uint rx_idx;
-    uint tx_idx;
-    
-
-    state_t rx_state;
-};
-#endif
 
 #define RESULT_PROCESSING 0
 #define RESULT_SUCCESS 1
@@ -133,6 +92,11 @@ typedef enum { MODE_HOST_CONTROL, MODE_TRIG, MODE_CYCLE, MODE_AUDIO } pl_mode;
 
 #define CMD_ERROR 0xFF
 
+
+// Methods
+
+int CommsProcessFrame(byte* rx_buf, byte* tx_buf, uint len);
+int CommsPreparePacket(byte* tx_buf, byte command, byte* payload, uint payload_len);
 
 #endif	/* COMMS_H */
 

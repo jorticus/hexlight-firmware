@@ -35,8 +35,8 @@ bool enableUsbAudio = true;
 #endif
 
 
-byte rx_buffer[64];
-byte tx_buffer[64];
+static byte rx_buffer[64];
+static byte tx_buffer[64];
 
 
 //typedef struct {
@@ -57,7 +57,7 @@ byte tx_buffer[64];
 //} hexrgb_packet_xyz_t;
 
 
-ProtocolFramer cdcProtocolFramer;
+//ProtocolFramer cdcProtocolFramer;
 
 
 void USBUserProcess(void) {
@@ -75,26 +75,21 @@ void USBUserProcess(void) {
 
     if (!HIDRxHandleBusy(USBOutHandle) && !HIDTxHandleBusy(USBInHandle)) { //Check if data was received from the host.
 
-        int result = cdcProtocolFramer.ProcessData(rx_buffer, sizeof(rx_buffer));
-
-        if (result < 0) {
-            byte error_code = -result;
-            cdcProtocolFramer.PreparePacket(CMD_ERROR, &error_code, 1);
-        }
-
         // Clear TX buffer
         for (int i=0; i<sizeof(tx_buffer); i++)
            tx_buffer[i] = 0;
 
-        // Copy TX data
-        if (cdcProtocolFramer.tx_size > 0) {
-            for (int i=0; i<cdcProtocolFramer.tx_size; i++)
-                tx_buffer[i] = cdcProtocolFramer.tx_buffer[i];
+        // Process frame, with response
+        int tx_size = CommsProcessFrame(rx_buffer, tx_buffer, sizeof(rx_buffer));
+        if (tx_size < 0) {
+            byte error_code = -tx_size;
+            tx_size = CommsPreparePacket(tx_buffer, CMD_ERROR, &error_code, 1);
         }
-        
+
+        // Transmit the response
         USBInHandle = HIDTxPacket(HID_EP, (byte*)tx_buffer, sizeof(tx_buffer));
 
-        //Re-arm the OUT endpoint for the next packet
+        // Re-arm the OUT endpoint for the next packet
         USBOutHandle = HIDRxPacket(HID_EP, (byte*)rx_buffer, sizeof(rx_buffer));
     }
 
