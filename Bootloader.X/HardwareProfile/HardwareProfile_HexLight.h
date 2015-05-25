@@ -47,13 +47,18 @@
 	
 	#define BlinkLED() (mLED = ((ReadCoreTimer() & 0x0800000) != 0))
 	#define InitLED() do{	\
+                            ANSELA = 0x0003; /* AN0/1 are used as analog, rest are digital*/ \
+                            ANSELB = 0x0000; \
+                            TRISAbits.TRISA4 = 1; \
+                            TRISBbits.TRISB5 = 1; \
 							TRISBbits.TRISB7 = 0;  \
 							TRISBbits.TRISB8 = 0;  \
 							LATBbits.LATB7 = 0; LATBbits.LATB8 = 0;\
 						}while(0)
 	
 	// SW1
-	#define ReadSwitchStatus() (PORTReadBits(IOPORT_A, BIT_4) & BIT_4)
+	//#define ReadSwitchStatus() (PORTReadBits(IOPORT_A, BIT_4) & BIT_4)
+    #define ReadSwitchStatus() (_RA4)
 
    // Error indication	
 	#define Error()   do{ LATBbits.LATB7 = 0; LATBbits.LATB8 = 1; } while(0);

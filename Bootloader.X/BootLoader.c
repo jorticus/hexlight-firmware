@@ -46,57 +46,38 @@
 // NB: Config docs can be found here:
 // C:\Program Files (x86)\Microchip\xc32\v1.20\docs\PIC32MXConfigSet.pdf
 
-#if 1
-// Configuring the Device Configuration Registers
-// 80Mhz Core/Periph, Pri Osc w/PLL, Write protect Boot Flash
-#pragma config UPLLEN   = ON        // USB PLL Enabled
-#pragma config UPLLIDIV = DIV_4     // USB PLL Input Divider = Divide by 1
-#pragma config FUSBIDIO = OFF
-#pragma config FVBUSONIO = OFF
+#if BOARD_HEXLIGHT
+    // Configuring the Device Configuration Registers
+    // 80Mhz Core/Periph, Pri Osc w/PLL, Write protect Boot Flash
+    #pragma config UPLLEN   = ON        // USB PLL Enabled
+    #pragma config UPLLIDIV = DIV_4     // USB PLL Input Divider = Divide by 1
+    #pragma config FUSBIDIO = OFF
+    #pragma config FVBUSONIO = OFF
 
-#pragma config JTAGEN   = OFF
-#pragma config DEBUG    = OFF           // Background Debugger disabled
-#pragma config FPLLMUL  = MUL_20         // PLL Multiplier: Multiply by 20
-#pragma config FPLLIDIV = DIV_4         // PLL Input Divider:  Divide by 4
-#pragma config FPLLODIV = DIV_2         // PLL Output Divider: Divide by 2
+    #pragma config JTAGEN   = OFF
+    #pragma config DEBUG    = OFF           // Background Debugger disabled
+    #pragma config FPLLMUL  = MUL_20         // PLL Multiplier: Multiply by 20
+    #pragma config FPLLIDIV = DIV_4         // PLL Input Divider:  Divide by 4
+    #pragma config FPLLODIV = DIV_2         // PLL Output Divider: Divide by 2
 
-#pragma config FWDTEN = OFF             // WD timer: OFF
-#pragma config POSCMOD = HS             // Primary Oscillator Mode: High Speed xtal
-#pragma config FNOSC = PRIPLL           // Oscillator Selection: Primary oscillator  w/ PLL
-#pragma config FPBDIV = DIV_1           // Peripheral Bus Clock: Divide by 1
-#pragma config BWP = OFF                // Boot write protect: OFF
+    #pragma config OSCIOFNC = OFF           // CLKO Output Signal Active on the OSCO Pin (Disabled)
+    #pragma config FSOSCEN = OFF            // Secondary Oscillator Enable (Disabled)
 
-#pragma config IESO = OFF
-#pragma config FCKSM = CSECME
+    #pragma config FWDTEN = OFF             // WD timer: OFF
+    #pragma config POSCMOD = HS             // Primary Oscillator Mode: High Speed xtal
+    #pragma config FNOSC = PRIPLL           // Oscillator Selection: Primary oscillator  w/ PLL
+    #pragma config FPBDIV = DIV_1           // Peripheral Bus Clock: Divide by 1
+    #pragma config BWP = OFF                // Boot write protect: OFF
 
-#pragma config ICESEL = ICS_PGx1    // ICE pins (PGx2 is multiplexed with USB D+ and D- pins).
+    #pragma config IESO = OFF
+    #pragma config FCKSM = CSECME
+
+    #pragma config ICESEL = ICS_PGx1    // ICE pins (PGx2 is multiplexed with USB D+ and D- pins).
+
+    #define SWITCH_PRESSED 1
+#else
+    #error "Unsupported Board"
 #endif
-
-#if 0
-#pragma config UPLLEN   = ON        // USB PLL Enabled
-#pragma config UPLLIDIV = DIV_6    // USB PLL Input Divider = Divide by 1
-#pragma config FUSBIDIO = OFF
-#pragma config FVBUSONIO = OFF
-
-#pragma config JTAGEN   = OFF
-#pragma config DEBUG    = OFF           // Background Debugger disabled
-#pragma config FPLLMUL  = MUL_20         // PLL Multiplier: Multiply by 20
-#pragma config FPLLIDIV = DIV_6         // PLL Input Divider:  Divide by 4
-#pragma config FPLLODIV = DIV_2         // PLL Output Divider: Divide by 2
-
-#pragma config FWDTEN = OFF             // WD timer: OFF
-#pragma config POSCMOD = HS             // Primary Oscillator Mode: High Speed xtal
-#pragma config FNOSC = PRIPLL           // Oscillator Selection: Primary oscillator  w/ PLL
-#pragma config FPBDIV = DIV_1           // Peripheral Bus Clock: Divide by 1
-#pragma config BWP = OFF                // Boot write protect: OFF
-
-#pragma config IESO = OFF
-#pragma config FCKSM = CSECME
-
-#pragma config ICESEL = ICS_PGx1    // ICE pins (PGx2 is multiplexed with USB D+ and D- pins).
-#endif
-
-#define SWITCH_PRESSED 0
 
 
 
@@ -133,11 +114,11 @@ INT main(void)
 
 	// Setup cmonfiguration
 	pbClk = SYSTEMConfig(SYS_FREQ, SYS_CFG_WAIT_STATES | SYS_CFG_PCACHE);
-	
+
 	InitLED();
     
 	// Enter firmware upgrade mode if there is a trigger or if the application is not valid
-	//if(CheckTrigger() || !ValidAppPresent())
+	if(CheckTrigger() || !ValidAppPresent())
 	{
 		// Initialize the transport layer - UART/USB/Ethernet
 		TRANS_LAYER_Init(pbClk);
