@@ -2,7 +2,7 @@
     <type>com.microchip.mplab.nbide.embedded.makeproject</type>
     <configuration>
         <data xmlns="http://www.netbeans.org/ns/make-project/1">
-            <name>HexRGB</name>
+            <name>HexLight</name>
             <creation-uuid>4776daf5-4300-4f8a-b97e-a50386162dfb</creation-uuid>
             <make-project-type>0</make-project-type>
             <c-extensions>c</c-extensions>

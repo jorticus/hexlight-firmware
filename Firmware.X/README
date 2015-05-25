@@ -1,0 +1,9 @@
+HexLight main firmware
+Supported chips:
+    PIC32MX2xx family
+    Note: PIC32MX1xx family does not support USB
+    Note: PIC32MX210F016B does not have enough flash memory for the application!!! Use at least a PIC32MX220F032B or higher
+
+Configurations:
+    HexLight_Standalone - For running without a bootloader
+    HexLight            - For running with the AN1388 USB bootloader

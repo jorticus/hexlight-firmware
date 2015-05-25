@@ -12,7 +12,7 @@
  *   PIC32MX460F512L (UBW32 dev board)
  */
 
-#define BUILD_NO_BOOTLOADER
+//#define BUILD_NO_BOOTLOADER
 
 
 #include <p32xxxx.h>
@@ -31,6 +31,7 @@ extern "C" {
 #include "colourengine.hpp"
 
 
+// HexLight hardware configuration
 #ifdef BUILD_NO_BOOTLOADER
 #pragma config UPLLEN   = ON        // USB PLL Enabled
 #pragma config UPLLIDIV = DIV_4     // USB PLL Input Divider = Divide by 1
